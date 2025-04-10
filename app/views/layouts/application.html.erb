@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Study Abroad Portal</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.4/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-DQvkBjpPgn7RC31MCQoOeC9TI2kdqa4+BSgNMNj8v77fdC77Kj5zpWFTJaaAoMbC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.4/dist/js/bootstrap.bundle.min.js" integrity="sha384-YUe2LzesAfftltw+PEaao2tjU/QATaW/rOitAq67e0CT0Zi2VVRL0oC4+gAaeBKu" crossorigin="anonymous"></script>
+    <!-- Add Google Maps JavaScript API with error handling -->
+    <script>
+      // Debug function to check API status
+      function checkGoogleMapsStatus() {
+        console.log('Checking Google Maps API status...');
+        if (window.google && window.google.maps) {
+          console.log('Google Maps API is loaded and available');
+          console.log('Available APIs:', Object.keys(window.google.maps));
+          return true;
+        } else {
+          console.log('Google Maps API is not loaded');
+          return false;
+        }
+      }
+
+      function initGoogleMaps() {
+        console.log('Google Maps API loaded successfully');
+        checkGoogleMapsStatus();
+        // Dispatch a custom event when Google Maps is loaded
+        window.dispatchEvent(new Event('google-maps-loaded'));
+      }
+
+      function handleGoogleMapsError(error) {
+        console.error('Google Maps API failed to load:', error);
+        // Show user-friendly error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-warning alert-dismissible fade show';
+        errorDiv.innerHTML = `
+          <strong>Warning:</strong> Google Maps functionality is not available. Please check your internet connection or try again later.
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.body.insertBefore(errorDiv, document.body.firstChild);
+      }
+
+      // Check API status on page load
+      window.addEventListener('load', () => {
+        console.log('Page loaded, checking Google Maps API...');
+        checkGoogleMapsStatus();
+      });
+    </script>
+    <script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjw3HIsW8WLLriMQ_u3wQng2ggRKRP2cg&libraries=places&callback=initGoogleMaps"
+      onerror="handleGoogleMapsError">
+    </script>
+
+  </head>
+
+  <body>
+    <%= render "layouts/sidebar" %>
+
+    <%= yield %>
+  </body>
+</html>

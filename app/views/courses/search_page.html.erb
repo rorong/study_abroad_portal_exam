@@ -1,0 +1,76 @@
+<%= stylesheet_link_tag "search_page", "data-turbo-track": "reload" %>
+
+<div class="search-page-wrapper" data-controller="search-page">
+  <div class="container">
+    <div class="welcome-quote">
+      <div class="quote-text" data-search-page-target="quoteText">
+        "Education is the passport to the future, for tomorrow belongs to those who prepare for it today."
+      </div>
+      <div class="quote-author" data-search-page-target="quoteAuthor">- Malcolm X</div>
+    </div>
+
+    <div class="features">
+      <div class="feature-item">
+        <i class="fas fa-globe feature-icon"></i>
+        <span class="feature-text">Global Programs</span>
+      </div>
+      <div class="feature-item">
+        <i class="fas fa-graduation-cap feature-icon"></i>
+        <span class="feature-text">Top Universities</span>
+      </div>
+      <div class="feature-item">
+        <i class="fas fa-handshake feature-icon"></i>
+        <span class="feature-text">Career Support</span>
+      </div>
+    </div>
+
+    <div class="subtitle">
+      Discover your perfect study abroad program
+    </div>
+
+    <%= form_with url: courses_path, method: :get, local: false, 
+        data: { 
+          controller: "search",
+          search_target: "form"
+        } do |f| %>
+      <div class="fx">
+        <div style="flex: 1;">
+          <%= f.text_field :query, 
+            class: "form-control",
+            placeholder: "Search for courses...",
+            data: { 
+              search_target: "input",
+              search_page_target: "searchInput",
+              action: "input->search#updateQueryResults focus->search-page#showSuggestions blur->search-page#hideSuggestions"
+            } %>
+        </div>
+        <button type="button" data-action="search#performSearch">
+          <i class="fas fa-search search-icon"></i>
+        </button>
+      </div>
+      
+      <div class="search-suggestions" data-search-page-target="suggestions">
+        <div class="suggestion-item" data-action="click->search-page#handleSuggestionClick">
+          <i class="fas fa-university suggestion-icon"></i>
+          <span class="suggestion-text">Business Programs</span>
+        </div>
+        <div class="suggestion-item" data-action="click->search-page#handleSuggestionClick">
+          <i class="fas fa-code suggestion-icon"></i>
+          <span class="suggestion-text">Computer Science</span>
+        </div>
+        <div class="suggestion-item" data-action="click->search-page#handleSuggestionClick">
+          <i class="fas fa-paint-brush suggestion-icon"></i>
+          <span class="suggestion-text">Arts & Design</span>
+        </div>
+        <div class="suggestion-item" data-action="click->search-page#handleSuggestionClick">
+          <i class="fas fa-flask suggestion-icon"></i>
+          <span class="suggestion-text">Science & Engineering</span>
+        </div>
+      </div>
+      
+      <div data-search-target="queryResults" class="d-none">
+        <div data-search-target="resultsContainer" class="search-results-container"></div>
+      </div>
+    <% end %>
+  </div>
+</div>

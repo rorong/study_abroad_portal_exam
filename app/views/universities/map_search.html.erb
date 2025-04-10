@@ -1,0 +1,143 @@
+<%# Map Search Container %>
+<div class="container-fluid p-0" data-controller="map-search" data-map-search-universities-value="<%= @universities.to_json %>">
+  <div class="row g-0">
+    <%# Map Section %>
+    <div class="col-md-8">
+      <div id="map" data-map-search-target="map" style="height: calc(100vh - 56px);"></div>
+    </div>
+
+    <%# Search Panel Section %>
+    <div class="col-md-4">
+      <div class="card h-100 rounded-0 border-0">
+        <div class="card-body p-4">
+          <h2 class="card-title mb-4">Search Universities</h2>
+          
+          <%# Search Form %>
+          <div class="d-flex gap-2">
+            <%= form_with url: map_search_universities_path, method: :get, class: "flex-grow-1", data: { map_search_target: "form" } do |f| %>
+              <div class="mb-3">
+                <%= f.label :query, "Search by Location", class: "form-label" %>
+                <%= f.text_field :query, 
+                    value: params[:query],
+                    class: "form-control",
+                    placeholder: "Enter a location (e.g. Sydney Cricket Ground)...",
+                    data: { map_search_target: "input" } %>
+              </div>
+
+              <%# Hidden submit button %>
+              <%= f.submit "Search", class: "d-none", data: { map_search_target: "submit" } %>
+            <% end %>
+            <%= link_to 'All', map_search_universities_path, 
+                class: "btn btn-primary align-self-end mb-3", 
+                data: { turbo: false } %>
+          </div>
+          <%# Results List %>
+          <div class="mt-4">
+            <h3 class="h5 mb-3">Universities (<%= @universities.length %>)</h3>
+            <div class="list-group list-group-flush" style="max-height: calc(100vh - 400px); overflow-y: auto;">
+              <% @universities.each do |university| %>
+                <div class="list-group-item list-group-item-action" 
+                     data-lat="<%= university.latitude %>" 
+                     data-lng="<%= university.longitude %>"
+                     data-action="click->map-search#focusUniversity">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <h5 class="mb-1"><%= university.name %></h5>
+                      <p class="mb-1 text-muted">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        <%= [university.city, university.country].compact.join(", ") %>
+                      </p>
+                    </div>
+                    <div class="text-end">
+                      <% if university.world_ranking.present? %>
+                        <span class="badge bg-primary mb-1">World Rank: <%= university.world_ranking %></span>
+                      <% end %>
+                      <% if university.qs_ranking.present? %>
+                        <span class="badge bg-success">QS Rank: <%= university.qs_ranking %></span>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%# Load Google Maps with callback %>
+<script>
+  // Prevent multiple loads and handle Turbo navigation
+  if (typeof window.google === 'undefined') {
+    window.initGoogleMaps = function() {
+      window.dispatchEvent(new Event('google-maps-ready'));
+    }
+  }
+
+  // Clean up Google Maps elements on Turbo navigation
+  document.addEventListener('turbo:before-render', function() {
+    // Remove any existing Google Maps elements
+    document.querySelectorAll('[id^="gmp-"]').forEach(el => el.remove());
+    // Clear any existing map instances
+    if (window.map) {
+      window.map = null;
+    }
+    if (window.markers) {
+      window.markers.forEach(marker => marker.setMap(null));
+      window.markers = [];
+    }
+    if (window.markerCluster) {
+      window.markerCluster.clearMarkers();
+      window.markerCluster = null;
+    }
+    if (window.infoWindow) {
+      window.infoWindow.close();
+      window.infoWindow = null;
+    }
+  });
+</script>
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjw3HIsW8WLLriMQ_u3wQng2ggRKRP2cg&libraries=places&callback=initGoogleMaps">
+</script>
+
+<%# Load MarkerClusterer Library %>
+<script src="https://unpkg.com/@google/markerclustererplus@5.1.0/dist/markerclustererplus.min.js"></script>
+
+<%# Custom Styles %>
+<style>
+  .list-group-item {
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .list-group-item:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .list-group-item.active {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+  }
+  
+  .badge {
+    font-size: 0.75rem;
+  }
+
+  /* Add styles for autocomplete dropdown */
+  .pac-container {
+    z-index: 1051;
+    border-radius: 4px;
+    margin-top: 2px;
+  }
+  
+  .pac-item {
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  
+  .pac-item:hover {
+    background-color: #f8f9fa;
+  }
+</style> 

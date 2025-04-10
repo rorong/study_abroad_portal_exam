@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: "postgres:12.19-alpine"
+    platform: linux/amd64
+    restart: always
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    networks:
+      - backend
+
+
+  elasticsearch:
+    image: elasticsearch:6.8.23
+    platform: linux/amd64
+    restart: always
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch:/usr/share/elasticsearch/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      retries: 3
+      start_period: 5s
+      timeout: 10s
+
+  app:
+    build: .
+    restart: always
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 4000 -b '0.0.0.0'"
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/backend-api
+    networks:
+      - backend
+
+volumes:
+  postgres:
+  elasticsearch:
+
+networks:
+  backend:
+    driver: "bridge"

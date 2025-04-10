@@ -1,0 +1,78 @@
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar Filters -->
+    <div class="col-md-3">
+      <%= render 'sidebar_filters' %>
+    </div>
+    
+    <!-- Main Content Area -->
+    <div class="col-md-9">
+      <%= render 'search_bar' %>
+      
+      <%= turbo_frame_tag "courses_list" do %>
+        <%= render 'courses_list', universities: @available_universities %>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<%# Add a hidden form to preserve search query when filters are applied %>
+<% if params[:query].present? %>
+  <%= form_tag courses_path, method: :get, id: "preserve_query_form", style: "display: none;" do %>
+    <%= hidden_field_tag :query, params[:query] %>
+    <% params.except(:controller, :action, :query).each do |key, value| %>
+      <%= hidden_field_tag key, value %>
+    <% end %>
+  <% end %>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add event listeners to all filter forms to preserve the search query
+      document.querySelectorAll('form[action*="courses"]').forEach(function(form) {
+        if (form.id !== 'preserve_query_form') {
+          form.addEventListener('submit', function(e) {
+            // Don't prevent default submission
+            // Just ensure the query parameter is included
+            if (!form.querySelector('input[name="query"]')) {
+              const queryInput = document.createElement('input');
+              queryInput.type = 'hidden';
+              queryInput.name = 'query';
+              queryInput.value = '<%= params[:query] %>';
+              form.appendChild(queryInput);
+            }
+          });
+        }
+      });
+    });
+  </script>
+<% end %>
+
+<style>
+  [data-search-target="queryResults"] {
+    position: absolute;
+    background: white;
+    width: 87.6%;
+    z-index: 1050;
+    border: 1px solid #ccc;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  .col-md-4 {
+    position: relative;
+  }
+  .clear-search {
+    display: none;
+    outline: none !important;
+  }
+  .form-control:not(:placeholder-shown) ~ .clear-search {
+    display: block;
+  }
+  .clear-search {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+  .clear-search:hover {
+    opacity: 1;
+  }
+</style>
+

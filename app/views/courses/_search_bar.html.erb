@@ -1,0 +1,80 @@
+<div class="card mb-4">
+  <div class="card-body">
+    <%= form_with url: courses_path, method: :get, 
+        data: { 
+          controller: "search",
+          turbo_frame: "courses_list",
+          search_target: "form",
+          action: "submit->search#search"
+        }, 
+        class: "d-flex position-relative" do |f| %>
+      <div class="input-group flex-grow-1">
+        <%= f.text_field :query, 
+            value: params[:query],
+            class: "form-control",
+            placeholder: "Search courses...",
+            data: { 
+              search_target: "input",
+              action: "input->search#updateQueryResults"
+            } %>
+        <button type="button"
+            class="position-absolute top-50 end-0 translate-middle-y text-secondary pe-3 clear-search border-0 bg-transparent"
+            data-action="search#clear"
+            style="right: 4rem; z-index: 4;">
+          <i class="fas fa-times"></i>
+        </button>
+        <button class="btn btn-primary" type="button" data-action="search#performSearch">
+          <i class="fas fa-search"></i> Search
+        </button>
+      </div>
+      
+      <div data-search-target="queryResults" class="d-none position-absolute w-100 bg-white border rounded-bottom shadow-sm" style="top: 100%; left: 0; z-index: 1050;">
+        <div data-search-target="resultsContainer" class="search-results-container" style="max-height: 300px; overflow-y: auto;"></div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+.course-result {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.course-result:hover {
+  background-color: #f8f9fa;
+}
+
+.course-result:not(:last-child) {
+  border-bottom: 1px solid #dee2e6;
+}
+
+.course-result .fw-bold {
+  color: #212529;
+  margin-bottom: 0.25rem;
+}
+
+.course-result .text-muted {
+  font-size: 0.875rem;
+}
+
+.clear-search {
+  display: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.form-control:not(:placeholder-shown) ~ .clear-search {
+  display: block;
+}
+
+.clear-search:hover {
+  opacity: 0.8;
+}
+
+.input-group {
+  position: relative;
+}
+</style> 

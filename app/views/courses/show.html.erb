@@ -1,0 +1,186 @@
+<div class="container mt-5">
+  <div class="mb-4">
+      <%= back_button %>
+  </div>
+
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body">
+          <h1 class="card-title mb-4"><%= @course.name %></h1>
+          
+          <% if @course.title.present? %>
+            <h2 class="h5 text-muted mb-4"><%= @course.title %></h2>
+          <% end %>
+
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-university text-primary me-2"></i>
+                <div>
+                  <h6 class="mb-0">Institution</h6>
+                  <p class="mb-0"><%= @institution.name %></p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-graduation-cap text-primary me-2"></i>
+                <div>
+                  <h6 class="mb-0">Department</h6>
+                  <p class="mb-0"><%= @department.name %></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-clock text-primary me-2"></i>
+                <div>
+                  <h6 class="mb-0">Duration</h6>
+                  <p class="mb-0"><%= @course.course_duration %> months</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-calendar text-primary me-2"></i>
+                <div>
+                  <h6 class="mb-0">Intake</h6>
+                  <p class="mb-0"><%= @course.intake || "Not specified" %></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-truck text-primary me-2"></i>
+                <div>
+                  <h6 class="mb-0">Delivery Method</h6>
+                  <p class="mb-0"><%= @course.delivery_method || "Not specified" %></p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-briefcase text-primary me-2"></i>
+                <div>
+                  <h6 class="mb-0">Internship Period</h6>
+                  <p class="mb-0"><%= @course.internship_period || "Not specified" %></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <% if @course.tuition_fee_international.present? %>
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <div class="d-flex align-items-center mb-3">
+                  <i class="fas fa-dollar-sign text-primary me-2"></i>
+                  <div>
+                    <h6 class="mb-0">Tuition Fee (International)</h6>
+                    <p class="mb-0"><%= format_currency(convert_currency(@course.tuition_fee_international)) %></p>
+                  </div>
+                </div>
+              </div>
+              <% if @course.application_fee.present? %>
+                <div class="col-md-6">
+                  <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-file-invoice-dollar text-primary me-2"></i>
+                    <div>
+                      <h6 class="mb-0">Application Fee</h6>
+                      <p class="mb-0"><%= format_currency(convert_currency(@course.application_fee)) %></p>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+
+          <% if @tags.any? %>
+            <div class="mb-4">
+              <h6 class="mb-3">Tags</h6>
+              <div class="d-flex flex-wrap gap-2">
+                <% @tags.each do |tag| %>
+                  <span class="badge bg-primary"><%= tag.tag_name %></span>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+          <% if @education_board.present? %>
+            <div class="mb-4">
+              <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-school text-primary me-2"></i>
+                <div>
+                  <h6 class="mb-0">Education Board</h6>
+                  <p class="mb-0"><%= @education_board.board_name %></p>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body">
+          <h5 class="card-title mb-4">Universities</h5>
+          <% @universities.each do |university| %>
+            <div class="mb-4">
+              <h6 class="mb-2"><%= university.name %></h6>
+              <% if university.country.present? %>
+                <p class="text-muted mb-2">
+                  <i class="fas fa-globe me-2"></i><%= university.country %>
+                </p>
+              <% end %>
+              <% if university.address.present? %>
+                <p class="text-muted mb-2">
+                  <i class="fas fa-map-marker-alt me-2"></i><%= university.address %>
+                </p>
+              <% end %>
+              <% if university.world_ranking.present? %>
+                <p class="text-muted mb-2">
+                  <i class="fas fa-trophy me-2"></i>World Ranking: <%= university.world_ranking %>
+                </p>
+              <% end %>
+              <% if university.qs_ranking.present? %>
+                <p class="text-muted mb-2">
+                  <i class="fas fa-star me-2"></i>QS Ranking: <%= university.qs_ranking %>
+                </p>
+              <% end %>
+              <% if university.national_ranking.present? %>
+                <p class="text-muted mb-2">
+                  <i class="fas fa-flag me-2"></i>National Ranking: <%= university.national_ranking %>
+                </p>
+              <% end %>
+              <% if university.established_in.present? %>
+                <p class="text-muted mb-2">
+                  <i class="fas fa-calendar-alt me-2"></i>Established: <%= university.established_in %>
+                </p>
+              <% end %>
+              <% if university.total_students.present? %>
+                <p class="text-muted mb-2">
+                  <i class="fas fa-users me-2"></i>Total Students: <%= number_with_delimiter(university.total_students) %>
+                </p>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <% if @course.course_weblink.present? %>
+        <div class="d-grid">
+          <a href="<%= @course.course_weblink %>" target="_blank" class="btn btn-primary btn-lg">
+            <i class="fas fa-external-link-alt me-2"></i>Visit Course Website
+          </a>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div> 

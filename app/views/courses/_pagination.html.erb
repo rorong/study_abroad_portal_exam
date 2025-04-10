@@ -1,0 +1,90 @@
+<%# Pagination partial that can be reused across views %>
+<%# Expects: courses (Kaminari paginated object) and query_params (hash of current query parameters) %>
+
+<div class="d-flex justify-content-center mt-4 mb-5">
+  <nav aria-label="Course pagination">
+    <ul class="pagination pagination-lg">
+      <%# First page %>
+      <% if courses.first_page? %>
+        <li class="page-item disabled">
+          <span class="page-link border-0 bg-light text-muted">
+            <i class="fas fa-angle-double-left"></i>
+          </span>
+        </li>
+      <% else %>
+        <li class="page-item">
+          <%= link_to courses_path(query_params.merge(page: 1)), class: "page-link border-0 bg-white text-primary" do %>
+            <i class="fas fa-angle-double-left"></i>
+          <% end %>
+        </li>
+      <% end %>
+      
+      <%# Previous page %>
+      <% if courses.prev_page %>
+        <li class="page-item">
+          <%= link_to courses_path(query_params.merge(page: courses.prev_page)), class: "page-link border-0 bg-white text-primary" do %>
+            <i class="fas fa-angle-left"></i>
+          <% end %>
+        </li>
+      <% else %>
+        <li class="page-item disabled">
+          <span class="page-link border-0 bg-light text-muted">
+            <i class="fas fa-angle-left"></i>
+          </span>
+        </li>
+      <% end %>
+      
+      <%# Page numbers %>
+      <% courses.total_pages.times do |i| %>
+        <% page_num = i + 1 %>
+        <% if page_num == courses.current_page %>
+          <li class="page-item active">
+            <span class="page-link border-0 bg-primary text-white"><%= page_num %></span>
+          </li>
+        <% elsif page_num <= 2 || page_num >= courses.total_pages - 1 || (page_num >= courses.current_page - 1 && page_num <= courses.current_page + 1) %>
+          <li class="page-item">
+            <%= link_to page_num, courses_path(query_params.merge(page: page_num)), class: "page-link border-0 bg-white text-primary" %>
+          </li>
+        <% elsif page_num == 3 && courses.current_page > 4 %>
+          <li class="page-item disabled">
+            <span class="page-link border-0 bg-light text-muted">...</span>
+          </li>
+        <% elsif page_num == courses.total_pages - 2 && courses.current_page < courses.total_pages - 3 %>
+          <li class="page-item disabled">
+            <span class="page-link border-0 bg-light text-muted">...</span>
+          </li>
+        <% end %>
+      <% end %>
+      
+      <%# Next page %>
+      <% if courses.next_page %>
+        <li class="page-item">
+          <%= link_to courses_path(query_params.merge(page: courses.next_page)), class: "page-link border-0 bg-white text-primary" do %>
+            <i class="fas fa-angle-right"></i>
+          <% end %>
+        </li>
+      <% else %>
+        <li class="page-item disabled">
+          <span class="page-link border-0 bg-light text-muted">
+            <i class="fas fa-angle-right"></i>
+          </span>
+        </li>
+      <% end %>
+      
+      <%# Last page %>
+      <% if courses.last_page? %>
+        <li class="page-item disabled">
+          <span class="page-link border-0 bg-light text-muted">
+            <i class="fas fa-angle-double-right"></i>
+          </span>
+        </li>
+      <% else %>
+        <li class="page-item">
+          <%= link_to courses_path(query_params.merge(page: courses.total_pages)), class: "page-link border-0 bg-white text-primary" do %>
+            <i class="fas fa-angle-double-right"></i>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </nav>
+</div> 

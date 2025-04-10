@@ -1,0 +1,577 @@
+<%= form_with url: courses_path, method: :get, local: false, 
+    data: { 
+      controller: "search",
+      turbo_frame: "courses_list",
+      search_target: "form",
+      currency: @current_currency || session[:currency] || 'USD'
+    }, 
+    class: "mb-4" do |f| %>
+    <div class="row g-3">
+      <div class="col-md-12">
+        <%= f.label :query, "Search Courses", class: "form-label" %>
+        <div class="position-relative d-flex">
+          <%= f.text_field :query, 
+            value: params[:query],
+            class: "form-control",
+            placeholder: "Search courses...",
+            data: { 
+              search_target: "input",
+              action: "input->search#updateQueryResults"
+            } %>
+          <button type="button"
+              class="position-absolute top-50 end-0 translate-middle-y text-secondary pe-3 clear-search border-0 bg-transparent"
+              data-action="search#clear"
+              style="margin-right: 14%; font-size: 1.8rem;">
+            <i class="fas fa-times"></i>
+          </button>
+          <button type="button"
+              class="btn btn-primary ms-2"
+              data-action="search#performSearch"
+              style="background-color: #fc034e;">
+            <i class="fas fa-search"></i> Search
+          </button>
+          <%= link_to root_path, class: "btn btn-secondary ms-2", data: { turbo: false } do %>
+            <i class="fas fa-home"></i> Home
+          <% end %>
+        </div>
+        
+        <div data-search-target="queryResults" class="d-none">
+          <div data-search-target="resultsContainer" class="search-results-container overflow-auto" style="max-height: 200px"></div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <%= f.label :department_id, "Department", class: "form-label" %>
+        <%= f.select :department_id, 
+          options_from_collection_for_select(
+            @available_departments.map { |d| [d, d.id, { 'data-count' => @filtered_courses_query.where(department_id: d.id).count }] },
+            :second, ->(d) { "#{d.first.name} (#{d[2]['data-count']})" },
+            params[:department_id]
+          ),
+          { include_blank: "Department" }, 
+          class: "form-select form-select-lg py-3", 
+          data: { action: "change->search#handleFilterChange" }
+        %>
+      </div>
+      <!-- <div class="col-md-2">
+        <%= f.label :institution_id, "Institution", class: "form-label" %>
+        <%= f.select :institution_id, 
+          options_from_collection_for_select(
+            @available_institutions.map { |i| [i, i.id, { 'data-count' => @filtered_courses_query.where(institution_id: i.id).count }] },
+            :second, ->(i) { "#{i.first.name} (#{i[2]['data-count']})" },
+            params[:institution_id]
+          ),
+          { include_blank: "Institution" }, 
+          class: "form-select form-select-lg py-3", 
+          data: { action: "change->search#search" }
+        %>
+      </div>-->
+      <div class="col-md-2">
+        <%= f.label :university_id, "University", class: "form-label" %>
+        <%= f.select :university_id, 
+          options_from_collection_for_select(
+            @available_universities.map { |u| [u, u.id, { 'data-count' => @filtered_courses_query.joins(:universities).where(universities: { id: u.id }).count }] },
+            :second, ->(u) { "#{u.first.name} (#{u[2]['data-count']})" },
+            params[:university_id]
+          ),
+          { include_blank: "University" }, 
+          class: "form-select form-select-lg py-3", 
+          data: { action: "change->search#handleFilterChange" }
+        %>
+      </div>
+      <div class="col-md-2">
+        <%= f.label :university_country, "University Country", class: "form-label" %>
+        <%= f.select :university_country,
+          options_for_select(
+            @available_university_countries.map { |country| ["#{country} (#{@filtered_courses_query.joins(:universities).where(universities: { country: country }).count})", country] },
+            selected: params[:university_country]
+          ),
+          { include_blank: "University Country" },
+          class: "form-select form-select-lg py-3",
+          data: { action: "change->search#handleFilterChange" }
+        %>
+      </div>
+      <div class="col-md-2">
+        <%= f.label :type_of_university, "University Type", class: "form-label" %>
+        <%= f.select :type_of_university,
+          options_for_select(
+            @available_university_types.map { |type| ["#{type} (#{@filtered_courses_query.joins(:universities).where(universities: { type_of_university: type }).count})", type] },
+            selected: params[:type_of_university]
+          ),
+          { include_blank: "University Type" },
+          class: "form-select form-select-lg py-3",
+          data: { action: "change->search#handleFilterChange" }
+        %>
+      </div>
+      <div class="col-md-2">
+        <%= f.label :university_address, "University Address", class: "form-label" %>
+        <div class="position-relative">
+          <%= f.text_field :university_address,
+            value: params[:university_address],
+            placeholder: "Search by address...",
+            class: "form-control form-control-lg py-3",
+            data: { 
+              search_target: "addressInput",
+              action: "keydown->search#handleAddressKeydown"
+            },
+            autocomplete: "off"
+          %>
+          <%= f.hidden_field :latitude, value: params[:latitude], data: { search_target: "latitude" } %>
+          <%= f.hidden_field :longitude, value: params[:longitude], data: { search_target: "longitude" } %>
+          <div class="invalid-feedback" data-search-target="addressError">
+            Please enter a valid address
+          </div>
+        </div>
+        <div class="mt-2">
+          <%= f.label :distance, "Search Radius (km)", class: "form-label" %>
+          <div class="d-flex align-items-center">
+            <%= f.number_field :distance, 
+              value: params[:distance] || 50,
+              placeholder: "Radius",
+              class: "form-control form-control-sm", 
+              data: { 
+                search_target: "distance",
+                action: "input->search#search"
+              } %>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <%= f.label :level_of_course, "Level of Course", class: "form-label" %>
+        <%= f.select :level_of_course, 
+          options_for_select(@available_levels, selected: params[:level_of_course]), 
+          { include_blank: "Level of Course" }, 
+          class: "form-select form-select-lg py-3", 
+          data: { action: "change->search#handleFilterChange" } %>
+      </div>
+      <div class="col-md-2">
+        <%= f.label :allow_backlogs, "Backlogs Allowed", class: "form-label" %>
+        <%= f.select :allow_backlogs,
+          options_for_select(
+            available_backlogs.map { |backlogs| ["#{backlogs} Backlogs (#{@filtered_courses_query.where(allow_backlogs: backlogs).count})", backlogs] },
+            selected: params[:allow_backlogs]
+          ),
+          { include_blank: "Backlogs Allowed" },
+          class: "form-select form-select-lg py-3",
+          data: { action: "change->search#handleFilterChange" }
+        %>
+      </div>
+      <div class="col-md-2">
+        <%= f.label :lateral_entry_possible, "Lateral Entry", class: "form-label" %>
+        <%= f.select :lateral_entry_possible,
+          options_for_select(
+            available_lateral_entries.map { |entry| ["#{entry ? 'Yes' : 'No'} (#{@filtered_courses_query.joins(:course_requirement).where(course_requirements: { lateral_entry_possible: entry }).count})", entry] },
+            selected: params[:lateral_entry_possible]
+          ),
+          { include_blank: "Lateral Entry" },
+          class: "form-select form-select-lg py-3",
+          data: { action: "change->search#handleFilterChange" }
+        %>
+      </div>
+      <div class="col-md-2">
+        <%= f.label :intake, "Intake", class: "form-label" %>
+        <%= f.select :intake,
+          options_for_select(
+            @available_intakes.map { |intake| ["#{intake} (#{@filtered_courses_query.where(intake: intake).count})", intake] },
+            selected: params[:intake]
+          ),
+          { include_blank: "Intake" },
+          class: "form-select form-select-lg py-3",
+          data: { action: "change->search#handleFilterChange" }
+        %>
+      </div>
+      <div class="col-md-2">
+        <%= f.label :current_status, "Status", class: "form-label" %>
+        <%= f.select :current_status, 
+          options_for_select(
+            @available_statuses.map { |status| ["#{status} (#{@filtered_courses_query.where(current_status: status).count})", status] },
+            selected: params[:current_status]
+          ),
+          { include_blank: "Status" }, 
+          class: "form-select form-select-lg py-3", 
+          data: { action: "change->search#handleFilterChange" } %>
+      </div>
+      <div class="col-md-2">
+        <%= f.label :delivery_method, "Delivery Method", class: "form-label" %>
+        <%= f.select :delivery_method, 
+          options_for_select(
+            @available_delivery_methods.map { |method| ["#{method} (#{@filtered_courses_query.where(delivery_method: method).count})", method] },
+            selected: params[:delivery_method]
+          ),
+          { include_blank: "Delivery Method" }, 
+          class: "form-select form-select-lg py-3", 
+          data: { action: "change->search#handleFilterChange" } %>
+      </div>
+      <div class="col-md-2">
+        <%= label_tag :tag_id, "Tag", class: "form-label" %>
+        <%= select_tag :tag_id, 
+          options_from_collection_for_select(
+            @available_tags.map { |t| [t, t.id, { 'data-count' => @filtered_courses_query.joins(:tags).where(tags: { id: t.id }).count }] },
+            :second, ->(t) { "#{t.first.tag_name} (#{t[2]['data-count']})" },
+            params[:tag_id]
+          ),
+          { include_blank: 'Tag', class: "form-select form-select-lg py-3", data: { action: "change->search#handleFilterChange" } }
+        %>
+      </div>
+      <div class="col-md-2">
+        <%= f.label :education_board_id, "Academic Board", class: "form-label" %>
+        <%= f.select :education_board_id, 
+          options_from_collection_for_select(
+            @available_education_boards.map { |b| [b, b.id, { 'data-count' => @filtered_courses_query.where(education_board_id: b.id).count }] },
+            :second, ->(b) { "#{b.first.board_name} (#{b[2]['data-count']})" },
+            params[:education_board_id]
+          ),
+          { include_blank: "Academic Board" }, 
+          class: "form-select form-select-lg py-3", 
+          data: { action: "change->search#handleFilterChange" } %>
+      </div>
+      <div class="col-md-2">
+        <%= f.label :min_tuition_fee, "Tuition Fee", class: "form-label" %>
+        <div class="d-flex align-items-center">
+          <div class="input-group input-group-sm me-2">
+            <span class="input-group-text">
+              <%= case session[:currency]
+                  when 'USD' then '$'
+                  when 'GBP' then '£'
+                  when 'EUR' then '€'
+                  when 'AED' then 'د.إ'
+                  when 'SGD' then 'S$'
+                  when 'AUD' then 'A$'
+                  when 'NZD' then 'NZ$'
+                  when 'JPY' then '¥'
+                  when 'CHF' then 'Fr'
+                  when 'THB' then '฿'
+                  when 'MYR' then 'RM'
+                  when 'CNY' then '¥'
+                  when 'HKD' then 'HK$'
+                  when 'CAD' then 'C$'
+                  when 'INR' then '₹'
+                  else '$'
+                  end %>
+            </span>
+            <%= f.number_field :min_tuition_fee, 
+              value: params[:min_tuition_fee],
+              placeholder: "Min",
+              class: "form-control", 
+              data: { 
+                search_target: "minTuitionFee",
+                action: "input->search#search"
+              } %>
+          </div>
+          <span class="mx-2">-</span>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">
+              <%= case session[:currency]
+                  when 'USD' then '$'
+                  when 'GBP' then '£'
+                  when 'EUR' then '€'
+                  when 'AED' then 'د.إ'
+                  when 'SGD' then 'S$'
+                  when 'AUD' then 'A$'
+                  when 'NZD' then 'NZ$'
+                  when 'JPY' then '¥'
+                  when 'CHF' then 'Fr'
+                  when 'THB' then '฿'
+                  when 'MYR' then 'RM'
+                  when 'CNY' then '¥'
+                  when 'HKD' then 'HK$'
+                  when 'CAD' then 'C$'
+                  when 'INR' then '₹'
+                  else '$'
+                  end %>
+            </span>
+            <%= f.number_field :max_tuition_fee, 
+              value: params[:max_tuition_fee],
+              placeholder: "Max",
+              class: "form-control", 
+              data: { 
+                search_target: "maxTuitionFee",
+                action: "input->search#search"
+              } %>
+          </div>
+        </div>
+        <div class="mt-2">
+          <input type="range" 
+            class="form-range" 
+            min="0" 
+            max="<%= convert_currency(100000, 'USD', session[:currency]) %>" 
+            step="<%= convert_currency(1000, 'USD', session[:currency]) %>"
+            data-search-target="tuitionFeeSlider"
+            data-action="input->search#updateTuitionFeeInputs"
+            value="<%= params[:max_tuition_fee] || convert_currency(100000, 'USD', session[:currency]) %>">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <%= f.label :internship_period, "Internship Period", class: "form-label" %>
+        <div class="d-flex align-items-center">
+          <%= f.number_field :min_internship, 
+            value: params[:min_internship],
+            placeholder: "Min",
+            class: "form-control form-control-sm me-2", 
+            data: { 
+              search_target: "minInternship",
+              action: "input->search#search"
+            } %>
+          <span class="mx-2">-</span>
+          <%= f.number_field :max_internship, 
+            value: params[:max_internship],
+            placeholder: "Max",
+            class: "form-control form-control-sm", 
+            data: { 
+              search_target: "maxInternship",
+              action: "input->search#search"
+            } %>
+        </div>
+        <div class="mt-2">
+          <input type="range" 
+            class="form-range" 
+            min="0" 
+            max="24" 
+            step="1"
+            data-search-target="internshipSlider"
+            data-action="input->search#updateInternshipInputs"
+            value="<%= params[:max_internship] || 24 %>">
+        </div>
+      </div>
+      <div class="col-md-2">
+      <%= f.label :min_world_ranking, "World Ranking", class: "form-label" %>
+      <div class="d-flex align-items-center">
+        <%= f.number_field :min_world_ranking, 
+          value: params[:min_world_ranking],
+          placeholder: "Min",
+          class: "form-control form-control-sm me-2", 
+          data: { 
+            search_target: "minWorldRanking",
+            action: "input->search#search"
+          } %>
+        <span class="mx-2">-</span>
+        <%= f.number_field :max_world_ranking, 
+          value: params[:max_world_ranking],
+          placeholder: "Max",
+          class: "form-control form-control-sm", 
+          data: { 
+            search_target: "maxWorldRanking",
+            action: "input->search#search"
+          } %>
+      </div>
+      <div class="mt-2">
+        <input type="range" 
+          class="form-range" 
+          min="0" 
+          max="1000" 
+          step="10"
+          data-search-target="worldRankingSlider"
+          data-action="input->search#updateWorldRankingInputs"
+          value="<%= params[:max_world_ranking] || 1000 %>">
+      </div>
+    </div>
+    <div class="col-md-2">
+      <%= f.label :min_qs_ranking, "QS Ranking", class: "form-label" %>
+      <div class="d-flex align-items-center">
+        <%= f.number_field :min_qs_ranking, 
+          value: params[:min_qs_ranking],
+          placeholder: "Min",
+          class: "form-control form-control-sm me-2", 
+          data: { 
+            search_target: "minQsRanking",
+            action: "input->search#search"
+          } %>
+        <span class="mx-2">-</span>
+        <%= f.number_field :max_qs_ranking, 
+          value: params[:max_qs_ranking],
+          placeholder: "Max",
+          class: "form-control form-control-sm", 
+          data: { 
+            search_target: "maxQsRanking",
+            action: "input->search#search"
+          } %>
+      </div>
+      <div class="mt-2">
+        <input type="range" 
+          class="form-range" 
+          min="0" 
+          max="1000" 
+          step="10"
+          data-search-target="qsRankingSlider"
+          data-action="input->search#updateQsRankingInputs"
+          value="<%= params[:max_qs_ranking] || 1000 %>">
+      </div>
+    </div>
+    <div class="col-md-2">
+      <%= f.label :min_national_ranking, "National Ranking", class: "form-label" %>
+      <div class="d-flex align-items-center">
+        <%= f.number_field :min_national_ranking, 
+          value: params[:min_national_ranking],
+          placeholder: "Min",
+          class: "form-control form-control-sm me-2", 
+          data: { 
+            search_target: "minNationalRanking",
+            action: "input->search#search"
+          } %>
+        <span class="mx-2">-</span>
+        <%= f.number_field :max_national_ranking, 
+          value: params[:max_national_ranking],
+          placeholder: "Max",
+          class: "form-control form-control-sm", 
+          data: { 
+            search_target: "maxNationalRanking",
+            action: "input->search#search"
+          } %>
+      </div>
+      <div class="mt-2">
+        <input type="range" 
+          class="form-range" 
+          min="0" 
+          max="500" 
+          step="5"
+          data-search-target="nationalRankingSlider"
+          data-action="input->search#updateNationalRankingInputs"
+          value="<%= params[:max_national_ranking] || 500 %>">
+      </div>
+    </div>
+    <div class="col-md-2">
+      <%= f.label :course_duration, "Duration", class: "form-label" %>
+      <div class="d-flex align-items-center">
+        <%= f.number_field :min_duration, 
+          value: params[:min_duration],
+          placeholder: "Min",
+          class: "form-control form-control-sm me-2", 
+          data: { 
+            search_target: "minDuration",
+            action: "input->search#search"
+          } %>
+        <span class="mx-2">-</span>
+        <%= f.number_field :max_duration, 
+          value: params[:max_duration],
+          placeholder: "Max",
+          class: "form-control form-control-sm", 
+          data: { 
+            search_target: "maxDuration",
+            action: "input->search#search"
+          } %>
+      </div>
+      <div class="mt-2">
+        <input type="range" 
+          class="form-range" 
+          min="0" 
+          max="48" 
+          step="1"
+          data-search-target="durationSlider"
+          data-action="input->search#updateDurationInputs"
+          value="<%= params[:max_duration] || 48 %>">
+      </div>
+    </div>
+      <div class="col-md-2">
+        <%= f.label :application_fee, "Application Fee", class: "form-label" %>
+        <div class="d-flex align-items-center">
+          <div class="input-group input-group-sm me-2">
+            <span class="input-group-text">
+              <%= case session[:currency]
+                  when 'USD' then '$'
+                  when 'GBP' then '£'
+                  when 'EUR' then '€'
+                  when 'AED' then 'د.إ'
+                  when 'SGD' then 'S$'
+                  when 'AUD' then 'A$'
+                  when 'NZD' then 'NZ$'
+                  when 'JPY' then '¥'
+                  when 'CHF' then 'Fr'
+                  when 'THB' then '฿'
+                  when 'MYR' then 'RM'
+                  when 'CNY' then '¥'
+                  when 'HKD' then 'HK$'
+                  when 'CAD' then 'C$'
+                  when 'INR' then '₹'
+                  else '$'
+                  end %>
+            </span>
+            <%= f.number_field :min_application_fee, 
+              value: params[:min_application_fee],
+              placeholder: "Min",
+              class: "form-control", 
+              data: { 
+                search_target: "minApplicationFee",
+                action: "input->search#search"
+              } %>
+          </div>
+          <span class="mx-2">-</span>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">
+              <%= case session[:currency]
+                  when 'USD' then '$'
+                  when 'GBP' then '£'
+                  when 'EUR' then '€'
+                  when 'AED' then 'د.إ'
+                  when 'SGD' then 'S$'
+                  when 'AUD' then 'A$'
+                  when 'NZD' then 'NZ$'
+                  when 'JPY' then '¥'
+                  when 'CHF' then 'Fr'
+                  when 'THB' then '฿'
+                  when 'MYR' then 'RM'
+                  when 'CNY' then '¥'
+                  when 'HKD' then 'HK$'
+                  when 'CAD' then 'C$'
+                  when 'INR' then '₹'
+                  else '$'
+                  end %>
+            </span>
+            <%= f.number_field :max_application_fee, 
+              value: params[:max_application_fee],
+              placeholder: "Max",
+              class: "form-control", 
+              data: { 
+                search_target: "maxApplicationFee",
+                action: "input->search#search"
+              } %>
+          </div>
+        </div>
+        <div class="mt-2">
+          <input type="range" 
+            class="form-range" 
+            min="0" 
+            max="<%= convert_currency(500, 'USD', session[:currency]) %>" 
+            step="<%= convert_currency(10, 'USD', session[:currency]) %>"
+            data-search-target="applicationFeeSlider"
+            data-action="input->search#updateApplicationFeeInputs"
+            value="<%= params[:max_application_fee] || convert_currency(500, 'USD', session[:currency]) %>">
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+<style>
+  /* Google Places Autocomplete styles */
+  .pac-container {
+    z-index: 1050;
+    border-radius: 0.375rem;
+    margin-top: 2px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+  
+  .pac-item {
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  
+  .pac-item:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .pac-item-selected {
+    background-color: #e9ecef;
+  }
+  
+  /* Prevent address input from showing browser's default autocomplete */
+  input[data-search-target="addressInput"] {
+    background-color: #ffffff !important;
+  }
+
+  /* Fallback styles when Google Maps is not available */
+  .google-maps-unavailable .pac-container {
+    display: none !important;
+  }
+
+  .google-maps-unavailable input[data-search-target="addressInput"] {
+    background-color: #f8f9fa !important;
+  }
+</style>

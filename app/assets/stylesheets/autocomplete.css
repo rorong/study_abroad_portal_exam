@@ -1,0 +1,22 @@
+.autocomplete-results {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.autocomplete-item {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.autocomplete-item:hover {
+  background-color: #f8f9fa;
+}
+
+.autocomplete-item:first-child {
+  border-top: 1px solid #dee2e6;
+}
+
+.autocomplete-item:last-child {
+  border-bottom: none;
+} 

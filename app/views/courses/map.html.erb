@@ -1,0 +1,172 @@
+<%# Map Container %>
+<div class="container-fluid p-0">
+  <div class="row g-0">
+    <%# Map Section %>
+    <div class="col-md-8">
+      <div id="map" style="height: calc(100vh - 56px);"></div>
+    </div>
+
+    <%# Info Panel Section %>
+    <div class="col-md-4">
+      <div class="card h-100 rounded-0 border-0">
+        <div class="card-body p-4">
+          <h2 class="card-title mb-4">University Details</h2>
+          <div id="university-info" class="text-center text-muted">
+            <i class="fas fa-map-marker-alt fa-3x mb-3"></i>
+            <p class="lead">Select a university on the map to view details</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%# Debug Info Panel %>
+<div class="position-fixed bottom-0 end-0 m-3 p-3 bg-white rounded shadow-sm" style="z-index: 1000;">
+  <div class="small text-muted">
+    <p class="mb-1">Total Universities: <%= @universities.count %></p>
+    <p class="mb-1">Universities with Coordinates: <%= @universities.select { |u| u.latitude.present? && u.longitude.present? }.count %></p>
+  </div>
+</div>
+
+<%# Map Initialization Script %>
+<script>
+  let map;
+  let markers = [];
+  let infoWindow;
+
+  function initMap() {
+    console.log('Initializing map...');
+    
+    // Initialize the map
+    map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 2,
+      center: { lat: 0, lng: 0 },
+      mapTypeId: 'terrain'
+    });
+
+    // Initialize info window
+    infoWindow = new google.maps.InfoWindow();
+
+    // Add markers for each university
+    const universities = <%= @universities.to_json.html_safe %>;
+    console.log('Universities data:', universities);
+
+    universities.forEach(university => {
+      if (university.latitude && university.longitude) {
+        console.log(`Creating marker for ${university.name} at ${university.latitude}, ${university.longitude}`);
+        
+        const position = {
+          lat: parseFloat(university.latitude),
+          lng: parseFloat(university.longitude)
+        };
+
+        const marker = new google.maps.Marker({
+          position: position,
+          map: map,
+          title: university.name,
+          animation: google.maps.Animation.DROP
+        });
+
+        // Add click listener to marker
+        marker.addListener('click', () => {
+          console.log(`Marker clicked for ${university.name}`);
+          
+          // Close any open info windows
+          infoWindow.close();
+          
+          // Create info window content
+          const content = `
+            <div class="p-2">
+              <h5 class="mb-2">${university.name}</h5>
+              <p class="mb-1"><strong>Country:</strong> ${university.country || 'N/A'}</p>
+              <p class="mb-1"><strong>Type:</strong> ${university.type_of_university || 'N/A'}</p>
+              <p class="mb-1"><strong>Address:</strong> ${university.address || 'N/A'}</p>
+              <a href="/universities/${university.id}" class="btn btn-primary btn-sm mt-2 w-100" data-turbo="false">
+                View Details
+              </a>
+            </div>
+          `;
+          
+          // Open info window
+          infoWindow.setContent(content);
+          infoWindow.open(map, marker);
+          
+          // Update the info panel
+          updateInfoPanel(university);
+          
+          // Center map on marker
+          map.setCenter(marker.getPosition());
+          map.setZoom(15);
+        });
+
+        markers.push(marker);
+      } else {
+        console.log(`Skipping ${university.name} - no coordinates`);
+      }
+    });
+
+    // Fit bounds to show all markers
+    if (markers.length > 0) {
+      const bounds = new google.maps.LatLngBounds();
+      markers.forEach(marker => bounds.extend(marker.getPosition()));
+      map.fitBounds(bounds);
+    }
+  }
+
+  function updateInfoPanel(university) {
+    const infoPanel = document.getElementById('university-info');
+    infoPanel.innerHTML = `
+      <div class="text-start">
+        <h3 class="mb-3">${university.name}</h3>
+        <div class="mb-3">
+          <p class="mb-1"><strong>Country:</strong> ${university.country || 'N/A'}</p>
+          <p class="mb-1"><strong>Type:</strong> ${university.type_of_university || 'N/A'}</p>
+          <p class="mb-1"><strong>World Ranking:</strong> ${university.world_ranking || 'N/A'}</p>
+          <p class="mb-1"><strong>QS Ranking:</strong> ${university.qs_ranking || 'N/A'}</p>
+          <p class="mb-1"><strong>National Ranking:</strong> ${university.national_ranking || 'N/A'}</p>
+        </div>
+        <div class="mb-3">
+          <h5 class="mb-2">Contact Information</h5>
+          <p class="mb-1"><strong>Address:</strong> ${university.address || 'N/A'}</p>
+          <p class="mb-1"><strong>Email:</strong> ${university.email || 'N/A'}</p>
+          <p class="mb-1"><strong>Phone:</strong> ${university.phone || 'N/A'}</p>
+          ${university.website ? `<p class="mb-1"><strong>Website:</strong> <a href="${university.website}" target="_blank">Visit Website</a></p>` : ''}
+        </div>
+        <div class="text-center">
+          <a href="/universities/${university.id}" class="btn btn-primary" data-turbo="false">
+            <i class="fas fa-info-circle me-2"></i>View Full Details
+          </a>
+        </div>
+      </div>
+    `;
+  }
+</script>
+
+<%# Load Google Maps %>
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjw3HIsW8WLLriMQ_u3wQng2ggRKRP2cg&callback=initMap">
+</script>
+
+<%# Custom Styles %>
+<style>
+  #map {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .card {
+    border: none;
+    box-shadow: none;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(45deg, #0d6efd, #0a58ca);
+    border: none;
+  }
+  
+  .btn-primary:hover {
+    background: linear-gradient(45deg, #0a58ca, #084298);
+    border: none;
+  }
+</style> 
