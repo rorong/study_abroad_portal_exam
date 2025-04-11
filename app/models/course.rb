@@ -1,6 +1,7 @@
 class Course < ApplicationRecord
   include Elasticsearch::Model
   include Elasticsearch::Model::Callbacks
+  include ElasticsearchIndexing
   
   has_many :course_universities, dependent: :destroy
   has_many :universities, through: :course_universities
@@ -8,7 +9,6 @@ class Course < ApplicationRecord
   belongs_to :owner, class_name: 'User'
   belongs_to :creator, class_name: 'User'
   belongs_to :modifier, class_name: 'User'
-  belongs_to :institution
   belongs_to :department
   belongs_to :education_board, optional: true
   has_one :course_requirement, dependent: :destroy
@@ -32,21 +32,217 @@ class Course < ApplicationRecord
   scope :available_for_international, -> { where(international_students_eligible: true) }
   scope :unlocked, -> { where(locked: false) }
 
-  # Elasticsearch Configuration
-  settings index: { number_of_shards: 1 } do
-    mappings dynamic: 'false' do
-      indexes :name, type: 'text'
+  # Custom JSON for Elasticsearch indexing
+  def as_indexed_json(options = {})
+    self.as_json(
+      only: [:id, :record_id, :name, :level_of_course, 
+            :course_code, :course_duration, :title, :application_fee,
+            :tuition_fee_international, :tuition_fee_local, :intake,
+            :delivery_method, :internship_period, :duration_months,
+            :international_students_eligible, :module_subjects, :allow_backlogs, :department_id, :current_status],
+      include: {
+        universities: { only: [:id, :name, :code, :category, :city, :address,
+         :country, :state, :post_code, :world_ranking, :qs_ranking, :national_ranking,
+          :application_fee, :lateral_entry_allowed, :latitude, :longitude, :type_of_university] },
+        tags: { only: [:id, :tag_name] },
+        department: { only: [:id, :name] },
+        course_requirement: { only: [:id, :lateral_entry_possible] }
+      }
+    )
+  end
+
+  settings index: {
+    number_of_shards: 1,
+    analysis: {
+      filter: {
+        autocomplete_filter: {
+          type:     'edge_ngram',
+          min_gram: 1,
+          max_gram: 20
+        }
+      },
+      analyzer: {
+        autocomplete: {
+          type:      'custom',
+          tokenizer: 'standard',
+          filter:    ['lowercase', 'autocomplete_filter']
+        }
+      }
+    }
+  } do
+    mappings dynamic: false do
+      indexes :name, analyzer: 'autocomplete'
+      indexes :title, analyzer: 'autocomplete'
+
+      # Fields for exact matching (should use keyword)
+      indexes :id, type: 'keyword'
       indexes :course_code, type: 'keyword'
-      indexes :institution_id, type: 'keyword'
-      indexes :department_id, type: 'integer'
-      indexes :level_of_course, type: 'text'
-      indexes :delivery_method, type: 'text'
-      indexes :current_status, type: 'text'
+      indexes :level_of_course, type: 'keyword'
+      indexes :delivery_method, type: 'keyword'
+      indexes :current_status, type: 'keyword'
+      indexes :department_id, type: 'keyword'
+      indexes :intake, type: 'keyword'
+      indexes :course_duration, type: 'keyword'
+
+      # Text fields for full-text search (without autocomplete)
       indexes :module_subjects, type: 'text'
-      indexes :created_at, type: 'date'
-      indexes :updated_at, type: 'date'
+
+      # float 
+      indexes :tuition_fee_international, type: 'float'
+      indexes :application_fee, type: 'float'
+      indexes :allow_backlogs, type: 'float'
+
+      indexes :universities, type: 'nested' do
+        indexes :name, analyzer: 'autocomplete'
+        indexes :type_of_university, type: 'keyword'
+      end
+
+      indexes :tags, type: 'nested' do
+        indexes :tag_name, analyzer: 'autocomplete'
+        indexes :id, type: 'keyword'
+      end
+
+      indexes :department, type: 'nested' do
+        indexes :name, analyzer: 'autocomplete'
+      end
+
+      indexes :course_requirement, type: 'nested' do
+        indexes :id, type: 'keyword'
+        indexes :lateral_entry_possible, type: 'boolean'
+      end
+
     end
   end
+
+  def self.advanced_search(query, filters = {}, sort)
+    search_definition = {
+      query: {
+        bool: {
+          must: [],
+          filter: []
+        }
+      }
+    }
+
+    # Full-text search
+    if query.present?
+      search_definition[:query][:bool][:must] << {
+        multi_match: {
+          query: query,
+          fields: ['name^3', 'title', 'course_code', 'module_subjects', 'universities.name']
+        }
+      }
+    end
+
+    # Filters
+    if filters[:min_fee].present? || filters[:max_fee].present?
+      filters[:min_fee] ||= 0
+      filters[:max_fee] ||= Float::INFINITY
+      search_definition[:query][:bool][:filter] << {
+          range: { tuition_fee_international: { gte: filters[:min_fee], lte: filters[:max_fee] } }
+        }
+    end
+
+    if filters[:min_duration].present? || filters[:max_duration].present?
+      min_duration = filters[:min_duration].present? ? filters[:min_duration].to_i : 0
+      max_duration = filters[:max_duration].present? ? filters[:max_duration].to_i : Float::INFINITY
+
+      search_definition[:query][:bool][:filter] << {
+          range: { course_duration: { gte: min_duration, lte: max_duration } }
+        }
+    end
+
+    if filters[:tag_id].present?
+      search_definition[:query][:bool][:filter] << {
+        nested: {
+          path: 'tags',
+          query: {
+            terms: { 'tags.id': filters[:tag_ids] }
+          }
+        }
+      }
+    end
+
+    if filters[:intake].present?
+      search_definition[:query][:bool][:filter] << {
+        term: { intake: filters[:intake] }
+      }
+    end
+
+    if filters[:allow_backlogs].present?
+      search_definition[:query][:bool][:filter] << {
+        term: { allow_backlogs: filters[:allow_backlogs] }
+      }
+    end
+
+    if filters[:current_status].present?
+      search_definition[:query][:bool][:filter] << {
+        term: { current_status: filters[:current_status] }
+      }
+    end
+
+    if filters[:delivery_method].present?
+      search_definition[:query][:bool][:filter] << {
+        term: { delivery_method: filters[:delivery_method] }
+      }
+    end
+
+    if filters[:department_name].present?
+       # Use a nested query for department.name
+      search_definition[:query][:bool][:filter] << {
+        nested: {
+          path: "department",
+          query: {
+            term: { "department.name": filters[:department_name] }
+          }
+        }
+      }
+    end
+
+    if filters[:lateral_entry_possible].present?
+       # Use a nested query for department.name
+      search_definition[:query][:bool][:filter] << {
+        nested: {
+          path: "course_requirement",
+          query: {
+            term: { "course_requirement.lateral_entry_possible": filters[:lateral_entry_possible] }
+          }
+        }
+      }
+    end
+
+    #TEST
+    if filters[:type_of_university].present?
+       # Use a nested query for department.name
+      search_definition[:query][:bool][:filter] << {
+        nested: {
+          path: "universities",
+          query: {
+            term: { "universities.type_of_university": filters[:type_of_university] }
+          }
+        }
+      }
+    end
+
+    # Sorting 
+    case sort
+      when 'application_fee_asc'
+        search_definition[:sort] = [{ 'application_fee' => { order: 'asc' } }]
+      when 'application_fee_desc'
+        search_definition[:sort] = [{ 'application_fee' => { order: 'desc' } }]
+      when 'tuition_fee_asc'
+        search_definition[:sort] = [{ 'tuition_fee_international' => { order: 'asc' } }]
+      when 'tuition_fee_desc'
+        search_definition[:sort] = [{ 'tuition_fee_international' => { order: 'desc' } }]
+      when 'course_duration_asc'
+        search_definition[:sort] = [{ 'course_duration' => { order: 'asc' } }]
+      when 'course_duration_desc'
+        search_definition[:sort] = [{ 'course_duration' => { order: 'desc' } }]
+    end
+
+      __elasticsearch__.search(search_definition)
+    end
+
 
   # Custom Search Method for Courses, Subjects, and Tests
   def self.search_courses_and_subjects(query, limit: 100, min_fee: nil, max_fee: nil)
@@ -115,6 +311,4 @@ class Course < ApplicationRecord
       tests: StandardizedTest.search_tests(query, limit: 10)
     }
   end
-  
-  
 end

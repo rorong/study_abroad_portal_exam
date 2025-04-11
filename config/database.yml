@@ -3,20 +3,20 @@ default: &default
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   host: <%= ENV.fetch("DATABASE_HOST", "localhost") %>
-  username: <%= ENV.fetch("DATABASE_USERNAME", "my_user") %>
+  username: <%= ENV.fetch("DATABASE_USERNAME", "postgres") %>
   password: <%= ENV.fetch("DATABASE_PASSWORD", "postgres") %>
   port: <%= ENV.fetch("DATABASE_PORT", 5432) %>
 
 development:
   <<: *default
-  database: study_aboard_dev_8
+  database: study_aboard_dev_check
 
-# test:
-#   <<: *default
-#   database: study_abroad_portal_test
+test:
+  <<: *default
+  database: study_abroad_portal_test
 
-# production:
-#   adapter: postgresql
-#   encoding: unicode
-#   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-#   url: <%= ENV['DATABASE_URL'] %>
+production:
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  url: <%= ENV['DATABASE_URL'] %>

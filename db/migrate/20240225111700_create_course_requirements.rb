@@ -54,6 +54,7 @@ class CreateCourseRequirements < ActiveRecord::Migration[7.0]
       t.string :gmat_score
       t.string :gre_score
       t.string :sat_score
+      
 
       t.timestamps
     end

@@ -6,7 +6,6 @@ class CreateCourses < ActiveRecord::Migration[7.1]
       t.references :owner, null: false, foreign_key: { to_table: :users }, index: true  # ✅ Corrected
       t.references :creator, null: false, foreign_key: { to_table: :users }, index: true  # ✅ Corrected
       t.references :modifier, null: false, foreign_key: { to_table: :users }, index: true  # ✅ Corrected
-      t.references :institution, null: false, foreign_key: true, index: true  # ✅ Corrected
       t.references :department, foreign_key: true, index: true
 
       t.datetime :last_activity_time
@@ -37,6 +36,9 @@ class CreateCourses < ActiveRecord::Migration[7.1]
       t.boolean :international_students_eligible
       t.boolean :should_delete, default: false
       t.text :module_subjects
+      t.integer :education_board_id
+      t.integer :allow_backlogs, default: 0
+      t.string :university_id
 
       t.timestamps
     end

@@ -7,7 +7,6 @@ namespace :import do
     file_path = "Courses_db.csv"
 
     CSV.foreach(file_path, headers: true, liberal_parsing: true).each_with_index do |row, index|
-     break if index == 2500
       begin
         ActiveRecord::Base.transaction do
           # Find or create owner user
@@ -31,11 +30,6 @@ namespace :import do
           end
           modifier.save(validate: false) if modifier.new_record?
 
-          # Find or create institution
-          institution = Institution.find_or_initialize_by(record_id: row['Institute Name.id']) do |inst|
-            inst.name = row['Institute Name'] || "Institution_#{row['Institute Name.id']}"
-          end
-          institution.save(validate: false)
 
           department = Department.find_or_create_by(name: row['Department'])
           tag = Tag.find_or_create_by(tag_name: row['Tag'])
@@ -63,7 +57,7 @@ namespace :import do
             level_of_course: row['Level of Course'],
             course_code: row['Course Code'],
             course_duration: row['Course Duration (in months)'],
-            institution_id: institution.id,
+            university_id: row['Institute Name.id'],
             department_id: department.id,
             title: row['Course Title'],
             tuition_fee_international: row['Tuition Fee (International - Per Annum)'],

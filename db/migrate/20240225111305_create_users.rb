@@ -6,6 +6,9 @@ class CreateUsers < ActiveRecord::Migration[7.1]
       t.string :secondary_email
       t.string :password_digest
       t.boolean :email_opt_out, default: false
+      t.string :role
+      t.string :provider
+      t.string :uid
       t.timestamps
     end
 

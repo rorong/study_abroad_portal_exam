@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_04_03_085925) do
+ActiveRecord::Schema[7.1].define(version: 2025_04_02_101907) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -72,7 +72,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_03_085925) do
     t.string "sat_score"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "allow_backlogs"
     t.index ["course_id"], name: "index_course_requirements_on_course_id"
   end
 
@@ -120,7 +119,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_03_085925) do
     t.bigint "owner_id", null: false
     t.bigint "creator_id", null: false
     t.bigint "modifier_id", null: false
-    t.bigint "institution_id", null: false
     t.bigint "department_id"
     t.datetime "last_activity_time"
     t.string "layout_id"
@@ -150,14 +148,14 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_03_085925) do
     t.boolean "international_students_eligible"
     t.boolean "should_delete", default: false
     t.text "module_subjects"
+    t.integer "education_board_id"
+    t.integer "allow_backlogs", default: 0
+    t.string "university_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "education_board_id"
-    t.integer "allow_backlogs", default: 0, null: false
     t.index ["course_code"], name: "index_courses_on_course_code"
     t.index ["creator_id"], name: "index_courses_on_creator_id"
     t.index ["department_id"], name: "index_courses_on_department_id"
-    t.index ["institution_id"], name: "index_courses_on_institution_id"
     t.index ["modifier_id"], name: "index_courses_on_modifier_id"
     t.index ["name"], name: "index_courses_on_name"
     t.index ["owner_id"], name: "index_courses_on_owner_id"
@@ -181,15 +179,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_03_085925) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["board_name"], name: "index_education_boards_on_board_name"
-  end
-
-  create_table "institutions", force: :cascade do |t|
-    t.string "record_id"
-    t.string "name"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_institutions_on_name"
-    t.index ["record_id"], name: "index_institutions_on_record_id"
   end
 
   create_table "remarks", force: :cascade do |t|
@@ -263,51 +252,96 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_03_085925) do
     t.boolean "conditional_offers"
     t.boolean "lateral_entry_allowed"
     t.boolean "on_campus_accommodation"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "sales_start_date"
+    t.datetime "sales_end_date"
+    t.datetime "support_start_date"
+    t.datetime "support_end_date"
+    t.string "created_by_id"
+    t.string "modified_by_id"
+    t.string "vendor_id"
+    t.string "manufacturer"
+    t.decimal "unit_price"
+    t.decimal "commission_rate"
+    t.decimal "tax"
+    t.string "usage_unit"
+    t.integer "qty_ordered"
+    t.integer "quantity_in_stock"
+    t.integer "reorder_level"
+    t.string "handler_id"
+    t.integer "quantity_in_demand"
+    t.text "description"
+    t.boolean "taxable"
+    t.string "currency"
+    t.decimal "exchange_rate"
+    t.string "layout_id"
+    t.string "tag"
+    t.string "image"
+    t.boolean "see_financial_docs_before_visa"
+    t.boolean "see_financial_docs_before_offer"
+    t.boolean "ask_deposit_before_visa"
+    t.boolean "ask_deposit_conditional_offer"
+    t.string "aec_account_manager"
+    t.string "application_process_type"
+    t.string "aec_account_manager_mobile"
+    t.string "aec_account_manager_email"
+    t.string "international_manager_phone"
+    t.date "contract_valid_till"
+    t.string "international_manager_name"
+    t.string "accounts_executive_name"
+    t.string "international_manager_email"
+    t.boolean "need_sop"
+    t.string "accounts_executive_phone"
+    t.string "accounts_executive_email"
+    t.boolean "interview_before_offer"
+    t.boolean "need_lor"
+    t.string "other_useful_contact"
+    t.integer "turnaround_time_days"
+    t.boolean "interview_before_visa"
+    t.boolean "accept_agent_appointment"
+    t.boolean "accept_agent_change"
+    t.string "processed_through"
+    t.datetime "user_modified_time"
+    t.datetime "system_activity_time"
+    t.datetime "user_activity_time"
+    t.datetime "system_modified_time"
+    t.integer "the_world_ranking"
+    t.integer "qs_world_ranking_latest"
+    t.integer "total_staff"
     t.decimal "latitude", precision: 10, scale: 8
     t.decimal "longitude", precision: 11, scale: 8
+    t.string "address_2"
+    t.text "scholarship_details"
+    t.text "notable_alumni"
+    t.text "affiliations"
+    t.text "misc_rankings"
+    t.integer "number_of_campuses"
+    t.decimal "campus_size_acres"
+    t.string "campus_location"
+    t.string "tier"
+    t.string "record_status"
+    t.boolean "locked"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["accounts_executive_name"], name: "index_universities_on_accounts_executive_name"
     t.index ["active"], name: "index_universities_on_active"
+    t.index ["aec_account_manager"], name: "index_universities_on_aec_account_manager"
     t.index ["city"], name: "index_universities_on_city"
     t.index ["code"], name: "index_universities_on_code"
     t.index ["country"], name: "index_universities_on_country"
+    t.index ["created_by_id"], name: "index_universities_on_created_by_id"
+    t.index ["handler_id"], name: "index_universities_on_handler_id"
+    t.index ["international_manager_name"], name: "index_universities_on_international_manager_name"
+    t.index ["layout_id"], name: "index_universities_on_layout_id"
+    t.index ["locked"], name: "index_universities_on_locked"
+    t.index ["modified_by_id"], name: "index_universities_on_modified_by_id"
     t.index ["name"], name: "index_universities_on_name"
+    t.index ["processed_through"], name: "index_universities_on_processed_through"
     t.index ["record_id"], name: "index_universities_on_record_id"
+    t.index ["record_status"], name: "index_universities_on_record_status"
     t.index ["state"], name: "index_universities_on_state"
+    t.index ["tag"], name: "index_universities_on_tag"
     t.index ["university_owner_id"], name: "index_universities_on_university_owner_id"
-  end
-
-  create_table "university_application_processes", force: :cascade do |t|
-    t.bigint "university_id", null: false
-    t.string "requirement"
-    t.boolean "required"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["university_id"], name: "index_university_application_processes_on_university_id"
-  end
-
-  create_table "university_contacts", force: :cascade do |t|
-    t.bigint "university_id", null: false
-    t.string "role"
-    t.string "name"
-    t.string "email"
-    t.string "phone"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["email"], name: "index_university_contacts_on_email"
-    t.index ["name"], name: "index_university_contacts_on_name"
-    t.index ["role"], name: "index_university_contacts_on_role"
-    t.index ["university_id"], name: "index_university_contacts_on_university_id"
-  end
-
-  create_table "university_rankings", force: :cascade do |t|
-    t.bigint "university_id", null: false
-    t.string "ranking_type"
-    t.integer "ranking"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["ranking_type", "ranking"], name: "index_university_rankings_on_ranking_type_and_ranking"
-    t.index ["university_id"], name: "index_university_rankings_on_university_id"
+    t.index ["vendor_id"], name: "index_universities_on_vendor_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -316,6 +350,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_03_085925) do
     t.string "secondary_email"
     t.string "password_digest"
     t.boolean "email_opt_out", default: false
+    t.string "role"
+    t.string "provider"
+    t.string "uid"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "email", default: "", null: false
@@ -323,10 +360,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_03_085925) do
     t.string "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
-    t.string "role"
-    t.string "provider"
-    t.string "uid"
-    t.boolean "admin", default: false
     t.index ["email"], name: "index_users_on_email"
     t.index ["email_address"], name: "index_users_on_email_address"
     t.index ["record_id"], name: "index_users_on_record_id"
@@ -344,7 +377,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_03_085925) do
   add_foreign_key "course_universities", "courses"
   add_foreign_key "course_universities", "universities"
   add_foreign_key "courses", "departments"
-  add_foreign_key "courses", "institutions"
   add_foreign_key "courses", "users", column: "creator_id"
   add_foreign_key "courses", "users", column: "modifier_id"
   add_foreign_key "courses", "users", column: "owner_id"
@@ -354,7 +386,4 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_03_085925) do
   add_foreign_key "subjects", "academic_levels"
   add_foreign_key "subjects", "departments"
   add_foreign_key "subjects", "education_boards"
-  add_foreign_key "university_application_processes", "universities"
-  add_foreign_key "university_contacts", "universities"
-  add_foreign_key "university_rankings", "universities"
 end

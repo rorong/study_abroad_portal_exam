@@ -1,5 +1,5 @@
-<%= turbo_stream.replace "filter_form" do %>
-  <%= render "filter_form", 
+<%#= turbo_stream.replace "filter_form" do %>
+  <%#= render "filter_form", 
       available_institutions: @available_institutions,
       available_departments: @available_departments, 
       available_universities: @available_universities,
@@ -14,7 +14,7 @@
       available_application_fees: @available_application_fees,
       courses: @courses,
       params: params %>
-<% end %>
+<%# end %>
 
 <%= turbo_stream.replace "courses_list" do %>
   <%= render "courses_list", 

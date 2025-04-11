@@ -4,7 +4,6 @@ class CreateSubjects < ActiveRecord::Migration[7.1]
       t.string :name
       t.references :academic_level, foreign_key: true, index: true
       t.references :education_board, foreign_key: true, index: true
-      
       t.timestamps
     end
   end

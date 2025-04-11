@@ -4,6 +4,35 @@ class CoursesController < ApplicationController
   end
 
   def index
+    @courses = Course.advanced_search(params[:query]).records
+    
+    respond_to do |format|
+      format.html
+      format.turbo_stream { 
+        render turbo_stream: turbo_stream.replace(
+          "courses_list",
+          partial: "courses_list",
+          locals: {
+            courses: @courses,
+            courses_by_university: @courses_by_university,
+            subjects: @subjects,
+            tests: @tests,
+            institutions: @available_institutions,
+            departments: @available_departments,
+            tags: @available_tags,
+            universities: @available_universities,
+            available_backlogs: @available_backlogs,
+            available_lateral_entries: @available_lateral_entries,
+            available_internship_periods: @available_internship_periods,
+            per_page: per_page,
+            filtered_courses_query: @filtered_courses_query
+          }
+        )
+      }
+    end
+  end
+
+  def index_old
     # Initialize base query with eager loading to reduce N+1 queries
     @courses = Course.includes(:universities, :institution, :department, :tags, :education_board)
 
@@ -32,7 +61,11 @@ class CoursesController < ApplicationController
     @courses = @courses.where(department_id: params[:department_id]) if params[:department_id].present?
     @courses = @courses.joins(:tags).where(tags: { id: params[:tag_id] }) if params[:tag_id].present?
     @courses = @courses.where(allow_backlogs: params[:allow_backlogs]) if params[:allow_backlogs].present?
+
+    
+    
     @courses = @courses.joins(:course_requirement).where(course_requirements: { lateral_entry_possible: params[:lateral_entry_possible] }) if params[:lateral_entry_possible].present?
+    
     @courses = @courses.joins(:universities).where(universities: { type_of_university: params[:type_of_university] }) if params[:type_of_university].present?
     
     # Handle distance-based filtering
