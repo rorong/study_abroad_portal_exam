@@ -5,23 +5,28 @@ class Course < ApplicationRecord
   
   has_many :course_universities, dependent: :destroy
   has_many :universities, through: :course_universities
+
   # Relationships
   belongs_to :owner, class_name: 'User'
   belongs_to :creator, class_name: 'User'
   belongs_to :modifier, class_name: 'User'
   belongs_to :department
-  belongs_to :education_board, optional: true
+
   has_one :course_requirement, dependent: :destroy
-  has_many :course_test_requirements, dependent: :destroy
-  has_many :standardized_tests, through: :course_test_requirements
-  has_many :course_subject_requirements, dependent: :destroy
-  has_many :subjects, through: :course_subject_requirements
   has_many :remarks, dependent: :destroy
   has_many :course_tags, dependent: :destroy
   has_many :tags, through: :course_tags
 
+  belongs_to :university, class_name: "University", primary_key: "record_id", foreign_key: "university_id", optional: true
+
+  # belongs_to :education_board, optional: true
+  # has_many :course_test_requirements, dependent: :destroy
+  # has_many :standardized_tests, through: :course_test_requirements
+  # has_many :course_subject_requirements, dependent: :destroy
+  # has_many :subjects, through: :course_subject_requirements
+
   # Validations
-  validates :name, :title, :course_code, :institution_id, :code, presence: true
+  validates :name, :title, :course_code, :code, presence: true
   validates :code, uniqueness: true
   validates :duration_months, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validates :tuition_fee_international, :tuition_fee_local, :application_fee,
@@ -41,7 +46,7 @@ class Course < ApplicationRecord
             :delivery_method, :internship_period, :duration_months,
             :international_students_eligible, :module_subjects, :allow_backlogs, :department_id, :current_status],
       include: {
-        universities: { only: [:id, :name, :code, :category, :city, :address,
+        universities: { only: [:id, :record_id, :name, :code, :category, :city, :address,
          :country, :state, :post_code, :world_ranking, :qs_ranking, :national_ranking,
           :application_fee, :lateral_entry_allowed, :latitude, :longitude, :type_of_university] },
         tags: { only: [:id, :tag_name] },
@@ -76,6 +81,7 @@ class Course < ApplicationRecord
 
       # Fields for exact matching (should use keyword)
       indexes :id, type: 'keyword'
+      indexes :record_id, type: 'keyword'
       indexes :course_code, type: 'keyword'
       indexes :level_of_course, type: 'keyword'
       indexes :delivery_method, type: 'keyword'
@@ -83,6 +89,7 @@ class Course < ApplicationRecord
       indexes :department_id, type: 'keyword'
       indexes :intake, type: 'keyword'
       indexes :course_duration, type: 'keyword'
+      indexes :internship_period, type: 'keyword'
 
       # Text fields for full-text search (without autocomplete)
       indexes :module_subjects, type: 'text'
@@ -93,16 +100,30 @@ class Course < ApplicationRecord
       indexes :allow_backlogs, type: 'float'
 
       indexes :universities, type: 'nested' do
+        indexes :id, type: 'keyword'
+        indexes :record_id, type: 'keyword'
+        indexes :world_ranking, type: 'integer'
+        indexes :qs_ranking, type: 'integer'
+        indexes :national_ranking, type: 'integer'
         indexes :name, analyzer: 'autocomplete'
         indexes :type_of_university, type: 'keyword'
+        indexes :country, type: 'text' do
+          indexes :raw, type: 'keyword'
+        end
+
+       indexes :address, type: 'text', analyzer: 'autocomplete', search_analyzer: 'standard'
+       
+       # Add geo_point for location field (latitude and longitude)
+       indexes :location, type: 'geo_point'
       end
 
       indexes :tags, type: 'nested' do
-        indexes :tag_name, analyzer: 'autocomplete'
         indexes :id, type: 'keyword'
+        indexes :tag_name, analyzer: 'autocomplete'
       end
 
       indexes :department, type: 'nested' do
+        indexes :id, type: 'keyword'
         indexes :name, analyzer: 'autocomplete'
       end
 
@@ -114,7 +135,7 @@ class Course < ApplicationRecord
     end
   end
 
-  def self.advanced_search(query, filters = {}, sort)
+  def self.advanced_search(query, filters = {}, sort=nil)
     search_definition = {
       query: {
         bool: {
@@ -129,17 +150,17 @@ class Course < ApplicationRecord
       search_definition[:query][:bool][:must] << {
         multi_match: {
           query: query,
-          fields: ['name^3', 'title', 'course_code', 'module_subjects', 'universities.name']
+          fields: ['name^3', 'title', 'course_code', 'module_subjects', 'universities.name', 'universities.country']
         }
       }
     end
 
     # Filters
-    if filters[:min_fee].present? || filters[:max_fee].present?
-      filters[:min_fee] ||= 0
-      filters[:max_fee] ||= Float::INFINITY
+    if filters[:min_tuition_fee].present? || filters[:max_tuition_fee].present?
+      filters[:min_tuition_fee] ||= 0
+      filters[:max_tuition_fee] ||= Float::INFINITY
       search_definition[:query][:bool][:filter] << {
-          range: { tuition_fee_international: { gte: filters[:min_fee], lte: filters[:max_fee] } }
+          range: { tuition_fee_international: { gte: filters[:min_tuition_fee], lte: filters[:max_tuition_fee] } }
         }
     end
 
@@ -151,6 +172,25 @@ class Course < ApplicationRecord
           range: { course_duration: { gte: min_duration, lte: max_duration } }
         }
     end
+
+    if filters[:min_internship].present? || filters[:max_internship].present?
+      min_internship = filters[:min_internship].present? ? filters[:min_internship].to_i : 0
+      max_internship = filters[:max_internship].present? ? filters[:max_internship].to_i : Float::INFINITY
+
+      search_definition[:query][:bool][:filter] << {
+          range: { internship_period: { gte: min_internship, lte: max_internship } }
+        }
+    end
+
+    if filters[:min_application_fee].present? || filters[:max_application_fee].present?
+      min_application_fee = filters[:min_application_fee].present? ? filters[:min_application_fee].to_i : 0
+      max_application_fee = filters[:max_application_fee].present? ? filters[:max_application_fee].to_i : Float::INFINITY
+
+      search_definition[:query][:bool][:filter] << {
+          range: { application_fee: { gte: min_application_fee, lte: max_application_fee } }
+        }
+    end
+
 
     if filters[:tag_id].present?
       search_definition[:query][:bool][:filter] << {
@@ -187,6 +227,12 @@ class Course < ApplicationRecord
       }
     end
 
+    if filters[:level_of_course].present?
+      search_definition[:query][:bool][:filter] << {
+        term: { level_of_course: filters[:level_of_course] }
+      }
+    end
+
     if filters[:department_name].present?
        # Use a nested query for department.name
       search_definition[:query][:bool][:filter] << {
@@ -213,13 +259,120 @@ class Course < ApplicationRecord
 
     #TEST
     if filters[:type_of_university].present?
-       # Use a nested query for department.name
       search_definition[:query][:bool][:filter] << {
         nested: {
           path: "universities",
           query: {
             term: { "universities.type_of_university": filters[:type_of_university] }
           }
+        }
+      }
+    end
+
+    if filters[:university_id].present?
+      search_definition[:query][:bool][:filter] << {
+        nested: {
+          path: "universities",
+          query: {
+            term: { "universities.id": filters[:university_id] }
+          }
+        }
+      }
+    end
+
+    if filters[:university_country].present?
+      search_definition[:query][:bool][:filter] << {
+        nested: {
+          path: "universities",
+          query: {
+            term: { "universities.country.raw": filters[:university_country] }
+          }
+        }
+      }
+    end
+
+    if filters[:university_address].present?
+      search_definition[:query][:bool][:filter] << {
+        nested: {
+          path: "universities",
+          query: {
+            match: {
+              "universities.address": filters[:university_address]
+            }
+          }
+        }
+      }
+    end
+
+
+    if filters[:min_world_ranking].present? || filters[:max_world_ranking].present?
+      min_world_ranking = filters[:min_world_ranking].present? ? filters[:min_world_ranking].to_i : 0
+      max_world_ranking = filters[:max_world_ranking].present? ? filters[:max_world_ranking].to_i : Float::INFINITY
+
+      search_definition[:query][:bool][:filter] << {
+          nested: {
+            path: "universities",
+            query: {
+              range: {
+                "universities.world_ranking": {
+                  gte: min_world_ranking,
+                  lte: max_world_ranking
+                }.compact # removes nils if one of them is missing
+              }
+            }
+          }
+        }
+    end
+
+    if filters[:min_qs_ranking].present? || filters[:max_qs_ranking].present?
+      min_qs_ranking = filters[:min_qs_ranking].present? ? filters[:min_qs_ranking].to_i : 0
+      max_qs_ranking = filters[:max_qs_ranking].present? ? filters[:max_qs_ranking].to_i : Float::INFINITY
+
+      search_definition[:query][:bool][:filter] << {
+          nested: {
+            path: "universities",
+            query: {
+              range: {
+                "universities.qs_ranking": {
+                  gte: min_qs_ranking,
+                  lte: max_qs_ranking
+                }.compact # removes nils if one of them is missing
+              }
+            }
+          }
+        }
+    end
+
+    if filters[:min_national_ranking].present? || filters[:max_national_ranking].present?
+      min_national_ranking = filters[:min_national_ranking].present? ? filters[:min_national_ranking].to_i : 0
+      max_national_ranking = filters[:max_national_ranking].present? ? filters[:max_national_ranking].to_i : Float::INFINITY
+
+      search_definition[:query][:bool][:filter] << {
+          nested: {
+            path: "universities",
+            query: {
+              range: {
+                "universities.national_ranking": {
+                  gte: min_national_ranking,
+                  lte: max_national_ranking
+                }.compact # removes nils if one of them is missing
+              }
+            }
+          }
+        }
+    end
+
+
+    if filters[:latitude].present? && filters[:longitude].present?
+      lat = filters[:latitude].to_f
+      lng = filters[:longitude].to_f
+      distance = filters[:distance].present? ? filters[:distance].to_f : 50 # Default to 50 km if not provided
+
+      # Apply the geo_distance filter
+      search_definition[:query][:bool][:filter] << {
+        geo_distance: {
+          distance: "#{distance}km",  # Distance filter in km (you can change this to "mi" for miles, etc.)
+          "universities.location": { lat: lat, lon: lng }
         }
       }
     end

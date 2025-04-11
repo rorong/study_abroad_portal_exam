@@ -53,6 +53,15 @@ CourseRequirement.__elasticsearch__.create_index! force: true
 CourseRequirement.import
 
 -------
+CHECK VERIFY MAPPINGS FOR EACH MODEL
+
 curl -X GET "http://elastic:12345678@localhost:9200/courses/_mapping?pretty"
 
 courses = Course.advanced_search('', {"lateral_entry_possible": false}, "application_fee_asc").records.count
+
+
+-----
+To reindex
+run common method for each after any changes
+
+Course.reindex_all

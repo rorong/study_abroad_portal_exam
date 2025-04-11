@@ -4,7 +4,77 @@ class CoursesController < ApplicationController
   end
 
   def index
+    # create filter hash and pass in below function
+     # {"lateral_entry_possible": false}
+     # {"min_tuition_fee": "10", "max_tuition_fee": "10"}
+
+    #Pass sort filters hash according to params
+    # Course.advanced_search(params[:query], {"lateral_entry_possible": false}, "application_fee_asc")
+
     @courses = Course.advanced_search(params[:query]).records
+    
+    # Get total count for pagination without loading all records
+    @course_count = @courses.count
+    # Get total unique universities count before pagination
+    @university_count = @courses.joins(:universities).select('universities.id').distinct.count
+    
+    # Store all university IDs before pagination for the map view
+    @all_university_ids = @courses.joins(:universities).select('universities.id').distinct.pluck('universities.id')
+    
+    # Calculate filter options from the total filtered results before pagination
+    filtered_course_ids = @courses.pluck(:id)
+    
+    # Store the filtered query before pagination for filter counts
+    @filtered_courses_query = @courses
+    
+    # Prepare dynamic filter options based on current filtered results
+    @available_institutions = University.joins(:courses).where(courses: { id: filtered_course_ids }).distinct
+    @available_departments = Department.joins(:courses).where(courses: { id: filtered_course_ids }).distinct
+    @available_universities = University.joins(:courses).where(courses: { id: filtered_course_ids }).distinct
+    @available_university_countries = University.joins(:courses).where(courses: { id: filtered_course_ids }).distinct.pluck(:country).compact
+    @available_university_types = University.joins(:courses).where(courses: { id: filtered_course_ids }).distinct.pluck(:type_of_university).compact
+    @available_intakes = Course.where(id: filtered_course_ids).distinct.pluck(:intake).compact
+    @available_statuses = Course.where(id: filtered_course_ids).distinct.pluck(:current_status).compact
+    @available_delivery_methods = Course.where(id: filtered_course_ids).distinct.pluck(:delivery_method).compact
+    @available_durations = Course.where(id: filtered_course_ids).distinct.pluck(:course_duration).compact
+    @available_levels = Course.where(id: filtered_course_ids).distinct.pluck(:level_of_course).compact
+    @available_application_fees = Course.where(id: filtered_course_ids).distinct.pluck(:application_fee).compact
+    @available_backlogs = Course.where(id: filtered_course_ids).distinct.pluck(:allow_backlogs).compact
+    @available_lateral_entries = Course.joins(:course_requirement).where(id: filtered_course_ids).distinct.pluck('course_requirements.lateral_entry_possible').compact
+    @available_tags = Tag.joins(:courses).where(courses: { id: filtered_course_ids }).distinct
+    @available_education_boards = EducationBoard.joins(:courses).where(courses: { id: filtered_course_ids }).distinct
+    @available_internship_periods = Course.where(id: filtered_course_ids).distinct.pluck(:internship_period).compact
+    
+    # Get per_page parameter from request or use default
+    per_page = params[:per_page].present? ? params[:per_page].to_i : 15
+    # Ensure per_page is within reasonable limits
+    per_page = [per_page, 5, 10, 15, 25, 50, 100].include?(per_page) ? per_page : 15
+    
+    # Calculate total pages before pagination
+    total_pages = (@courses.count.to_f / per_page).ceil
+    
+    # If the requested page is greater than the total pages, redirect to the first page
+    if params[:page].present? && params[:page].to_i > total_pages && total_pages > 0
+      # Preserve all parameters except page
+      redirect_params = params.to_unsafe_h.except(:controller, :action, :page)
+      redirect_params[:per_page] = per_page
+      return redirect_to courses_path(redirect_params)
+    end
+    
+    # Apply pagination after calculating filter counts
+    @courses = @courses.page(params[:page]).per(per_page)
+
+    #Refactor later
+    if params[:query].present?
+      @filtered_courses = @courses.includes(:university).where(id: @courses.pluck(:id))
+      @courses_by_university = @filtered_courses.group_by(&:university)
+
+    else
+      @courses_by_university = @courses.joins(:universities).group_by { |course| course.universities.first }.reject { |_, courses| courses.empty? }
+    end
+    
+    # Set the current currency for the view
+    @current_currency = session[:currency] || 'USD'
     
     respond_to do |format|
       format.html
@@ -31,6 +101,7 @@ class CoursesController < ApplicationController
       }
     end
   end
+
 
   def index_old
     # Initialize base query with eager loading to reduce N+1 queries
@@ -94,7 +165,7 @@ class CoursesController < ApplicationController
       @courses = @courses.where(course_duration: min_duration..max_duration)
     end
     
-    @courses = @courses.where(education_board_id: params[:education_board_id]) if params[:education_board_id].present?
+    # @courses = @courses.where(education_board_id: params[:education_board_id]) if params[:education_board_id].present?
     @courses = @courses.where(level_of_course: params[:level_of_course]) if params[:level_of_course].present? 
     
     # Handle internship period range

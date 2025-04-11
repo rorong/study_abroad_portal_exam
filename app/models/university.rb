@@ -12,11 +12,15 @@ class University < ApplicationRecord
     belongs_to :modifier, class_name: "User", primary_key: "record_id", foreign_key: "modified_by_id", optional: true
     validates :record_id, :name, presence: true
 
+    # Combine latitude and longitude into a location for Elasticsearch
+    def location
+      { lat: latitude, lon: longitude } # lat and lon should be the fields in your model
+    end
 
     # Custom JSON for Elasticsearch indexing
     def as_indexed_json(options = {})
       self.as_json(
-        only: [:id, :name, :code, :category, :city, :address,
+        only: [:id, :record_id, :name, :code, :category, :city, :address,
          :country, :state, :post_code, :world_ranking, :qs_ranking, :national_ranking,
           :application_fee, :lateral_entry_allowed, :latitude, :longitude, :type_of_university]
       )
@@ -47,21 +51,30 @@ class University < ApplicationRecord
 
         # Fields for exact matching (should use keyword)
         indexes :city, type: 'keyword'
-        indexes :country, type: 'keyword'
+        indexes :country, type: 'text' do
+          indexes :raw, type: 'keyword'
+        end
         indexes :state, type: 'keyword'
         indexes :post_code, type: 'keyword'
         indexes :type_of_university, type: 'keyword'
+        indexes :record_id, type: 'keyword'
+        indexes :id, type: 'keyword'
 
         # Text fields for full-text search (without autocomplete)
-        indexes :address, type: 'text'
-        indexes :world_ranking, type: 'text'
-        indexes :qs_ranking, type: 'text'
-        indexes :national_ranking, type: 'text'
+        indexes :address, type: 'text', analyzer: 'autocomplete', search_analyzer: 'standard'
+
+        #Integer field
+        indexes :world_ranking, type: 'integer'
+        indexes :qs_ranking, type: 'integer'
+        indexes :national_ranking, type: 'integer'
 
         # Numeric fields (latitude, longitude, fees, rankings)
         indexes :application_fee, type: 'float'
         indexes :latitude, type: 'float'
         indexes :longitude, type: 'float'
+        
+        # Add geo_point for location field (latitude and longitude)
+        indexes :location, type: 'geo_point'
       end
     end
   end
