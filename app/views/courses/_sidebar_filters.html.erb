@@ -24,21 +24,24 @@
             <%= f.label :department_id, "Department", class: "form-label" %>
             <%= f.select :department_id, 
               options_from_collection_for_select(
-                @available_departments.map { |d| [d, d.id, { 'data-count' => @filtered_courses_query.where(department_id: d.id).count }] },
-                :second, ->(d) { "#{d.first.name} (#{d[2]['data-count']})" },
+                @available_departments,
+                :id,
+                ->(d) { "#{d.name} (#{@available_departments_counts[d.id] || 0})" },
                 params[:department_id]
               ),
               { include_blank: "Department" }, 
               class: "form-select", 
               data: { action: "change->search#search" }
             %>
+
           </div>
           <div class="col-12">
             <%= f.label :university_id, "University", class: "form-label" %>
             <%= f.select :university_id, 
               options_from_collection_for_select(
-                @available_universities.map { |u| [u, u.id, { 'data-count' => @filtered_courses_query.joins(:universities).where(universities: { id: u.id }).count }] },
-                :second, ->(u) { "#{u.first.name} (#{u[2]['data-count']})" },
+                @available_universities,
+                :id,
+                ->(u) { "#{u.name} (#{@university_course_counts[u.id] || 0})" },
                 params[:university_id]
               ),
               { include_blank: "University" }, 
@@ -50,19 +53,24 @@
             <%= f.label :university_country, "University Country", class: "form-label" %>
             <%= f.select :university_country,
               options_for_select(
-                @available_university_countries.map { |country| ["#{country} (#{@filtered_courses_query.joins(:universities).where(universities: { country: country }).count})", country] },
+                @available_university_countries.map do |country|
+                  ["#{country} (#{@university_country_counts[country] || 0})", country]
+                end,
                 selected: params[:university_country]
               ),
               { include_blank: "University Country" },
               class: "form-select",
               data: { action: "change->search#search" }
             %>
+
           </div>
           <div class="col-12">
             <%= f.label :type_of_university, "University Type", class: "form-label" %>
             <%= f.select :type_of_university,
               options_for_select(
-                @available_university_types.map { |type| ["#{type} (#{@filtered_courses_query.joins(:universities).where(universities: { type_of_university: type }).count})", type] },
+                @available_university_types.map do |type|
+                  ["#{type} (#{@available_university_types_counts[type] || 0})", type]
+                end,
                 selected: params[:type_of_university]
               ),
               { include_blank: "University Type" },
@@ -105,17 +113,25 @@
           </div>
           <div class="col-12">
             <%= f.label :level_of_course, "Level of Course", class: "form-label" %>
-            <%= f.select :level_of_course, 
-              options_for_select(@available_levels, selected: params[:level_of_course]), 
-              { include_blank: "Level of Course" }, 
-              class: "form-select", 
-              data: { action: "change->search#search" } %>
+            <%= f.select :level_of_course,
+              options_for_select(
+                @available_levels.map do |available_level|
+                  ["#{available_level} (#{@available_levels_counts[available_level] || 0})", available_level]
+                end,
+                selected: params[:level_of_course]
+              ),
+              { include_blank: "Level of Course" },
+              class: "form-select",
+              data: { action: "change->search#search" }
+            %>
           </div>
           <div class="col-12">
             <%= f.label :allow_backlogs, "Backlogs Allowed", class: "form-label" %>
             <%= f.select :allow_backlogs,
               options_for_select(
-                @available_backlogs.map { |backlogs| ["#{backlogs} Backlogs (#{@filtered_courses_query.where(allow_backlogs: backlogs).count})", backlogs] },
+                @available_backlogs.map do |available_backlog|
+                  ["#{available_backlog} (#{@available_backlogs_counts[available_backlog] || 0})", available_backlog]
+                end,
                 selected: params[:allow_backlogs]
               ),
               { include_blank: "Backlogs Allowed" },
@@ -127,7 +143,9 @@
             <%= f.label :lateral_entry_possible, "Lateral Entry", class: "form-label" %>
             <%= f.select :lateral_entry_possible,
               options_for_select(
-                @available_lateral_entries.map { |entry| ["#{entry ? 'Yes' : 'No'} (#{@filtered_courses_query.joins(:course_requirement).where(course_requirements: { lateral_entry_possible: entry }).count})", entry] },
+                @available_lateral_entries.map do |entry|
+                  ["#{entry} (#{@available_lateral_entries_counts[entry] || 0})", entry]
+                end,
                 selected: params[:lateral_entry_possible]
               ),
               { include_blank: "Lateral Entry" },
@@ -139,59 +157,56 @@
             <%= f.label :intake, "Intake", class: "form-label" %>
             <%= f.select :intake,
               options_for_select(
-                @available_intakes.map { |intake| ["#{intake} (#{@filtered_courses_query.where(intake: intake).count})", intake] },
+                @available_intakes.map do |intake|
+                  ["#{intake} (#{@available_intakes_counts[intake] || 0})", intake]
+                end,
                 selected: params[:intake]
               ),
               { include_blank: "Intake" },
               class: "form-select",
               data: { action: "change->search#search" }
             %>
+
           </div>
           <div class="col-12">
             <%= f.label :current_status, "Status", class: "form-label" %>
-            <%= f.select :current_status, 
+            <%= f.select :current_status,
               options_for_select(
-                @available_statuses.map { |status| ["#{status} (#{@filtered_courses_query.where(current_status: status).count})", status] },
+                @available_statuses.map do |status|
+                  ["#{status} (#{@available_statuses_counts[status] || 0})", status]
+                end,
                 selected: params[:current_status]
               ),
-              { include_blank: "Status" }, 
-              class: "form-select", 
+              { include_blank: "Status" },
+              class: "form-select",
               data: { action: "change->search#search" }
             %>
           </div>
           <div class="col-12">
             <%= f.label :delivery_method, "Delivery Method", class: "form-label" %>
-            <%= f.select :delivery_method, 
+            <%= f.select :delivery_method,
               options_for_select(
-                @available_delivery_methods.map { |method| ["#{method} (#{@filtered_courses_query.where(delivery_method: method).count})", method] },
+                @available_delivery_methods.map do |delivery_method|
+                  ["#{delivery_method} (#{@available_delivery_methods_counts[delivery_method] || 0})", delivery_method]
+                end,
                 selected: params[:delivery_method]
               ),
-              { include_blank: "Delivery Method" }, 
-              class: "form-select", 
+              { include_blank: "Delivery Method" },
+              class: "form-select",
               data: { action: "change->search#search" }
             %>
           </div>
           <div class="col-12">
             <%= label_tag :tag_id, "Tag", class: "form-label" %>
-            <%= select_tag :tag_id, 
-              options_from_collection_for_select(
-                @available_tags.map { |t| [t, t.id, { 'data-count' => @filtered_courses_query.joins(:tags).where(tags: { id: t.id }).count }] },
-                :second, ->(t) { "#{t.first.tag_name} (#{t[2]['data-count']})" },
-                params[:tag_id]
+            <%= f.select :tag_id,
+              options_for_select(
+                @available_tags.map do |tag|
+                  ["#{tag} (#{@available_tags_counts[tag] || 0})", tag]
+                end,
+                selected: params[:tag_id]
               ),
-              { include_blank: 'Tag', class: "form-select", data: { action: "change->search#search" } }
-            %>
-          </div>
-          <div class="col-12">
-            <%= f.label :education_board_id, "Academic Board", class: "form-label" %>
-            <%= f.select :education_board_id, 
-              options_from_collection_for_select(
-                @available_education_boards.map { |b| [b, b.id, { 'data-count' => @filtered_courses_query.where(education_board_id: b.id).count }] },
-                :second, ->(b) { "#{b.first.board_name} (#{b[2]['data-count']})" },
-                params[:education_board_id]
-              ),
-              { include_blank: "Academic Board" }, 
-              class: "form-select", 
+              { include_blank: "Tag" },
+              class: "form-select",
               data: { action: "change->search#search" }
             %>
           </div>

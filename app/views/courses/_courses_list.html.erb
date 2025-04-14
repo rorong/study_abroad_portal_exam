@@ -1,7 +1,6 @@
 <%# Cache the commonly used values %>
 <% query_params = request.query_parameters %>
 <% course_count = @course_count || 0 %>
-<% university_count = @university_count || 0 # Use the count from controller %>
 <% filtered_courses_query = local_assigns[:filtered_courses_query] || @filtered_courses_query %>
 <% current_currency = @current_currency || session[:currency] || 'USD' %>
 
@@ -11,9 +10,6 @@
      data-action="currency:updated->currency#updateCurrencyDisplay">
   <%# Optimize filter processing by caching the lookups %>
   <% selected_filters = {}.tap do |filters|
-    if params[:institution_id].present?
-      filters[:institution_id] = institutions.find { |i| i.id.to_s == params[:institution_id] }&.name
-    end
     if params[:department_id].present?
       filters[:department_id] = departments.find { |d| d.id.to_s == params[:department_id] }&.name
     end
@@ -175,7 +171,7 @@
         Showing matches for "<span class="text-primary fw-bold"><%= params[:query] %></span>":<br>
       <% end %>
       <div class="mt-1">
-        <span class="fw-normal">Courses (<span class="text-primary fw-bold"><%= course_count %></span>) available in (<span class="text-primary fw-bold"><%= university_count %></span>) Institutes</span>
+        <span class="fw-normal">Courses (<span class="text-primary fw-bold"><%= course_count %></span>) available in (<span class="text-primary fw-bold"><%= @university_count %></span>) Institutes</span>
       </div>
     </h5>
     
@@ -301,7 +297,25 @@
                             <div class="fw-bold"><%= course.intake || "N/A" %></div>
                           </div>
                         </div>
-                        
+                         <div class="col-md-4">
+                          <div class="mb-3">
+                            <div class="text-muted mb-1">Level of Course</div>
+                            <div class="fw-bold"><%= course.level_of_course || "N/A" %></div>
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <div class="mb-3">
+                            <div class="text-muted mb-1">Delivery Method</div>
+                            <div class="fw-bold"><%= course.delivery_method || "N/A" %></div>
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                        <div class="mb-3">
+                          <div class="text-muted mb-1">Department</div>
+                          <div class="fw-bold"><%= course.department&.name || "N/A" %></div>
+                        </div>
+                      </div>
+
                         <div class="col-md-4">
                           <div class="mb-3">
                             <div class="text-muted mb-1">Title</div>
@@ -341,6 +355,7 @@
   <% end %>
 
   <%# Use the pagination partial %>
-  <%= render 'courses/pagination', courses: @courses, query_params: query_params %>
+  <%= paginate @courses, params: { per_page: params[:per_page] } %>
+  <%#= render 'courses/pagination', courses: @courses, query_params: query_params %>
    
 </div>

@@ -1,21 +1,3 @@
-<%#= turbo_stream.replace "filter_form" do %>
-  <%#= render "filter_form", 
-      available_institutions: @available_institutions,
-      available_departments: @available_departments, 
-      available_universities: @available_universities,
-      available_intakes: @available_intakes,
-      available_statuses: @available_statuses,
-      available_delivery_methods: @available_delivery_methods,
-      available_durations: @available_durations,
-      available_tags: @available_tags,
-      available_education_boards: @available_education_boards,
-      available_levels: @available_levels,
-      available_internship_periods: @available_internship_periods,
-      available_application_fees: @available_application_fees,
-      courses: @courses,
-      params: params %>
-<%# end %>
-
 <%= turbo_stream.replace "courses_list" do %>
   <%= render "courses_list", 
       courses: @courses, 

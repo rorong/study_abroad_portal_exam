@@ -3,7 +3,7 @@ class UniversitiesController < ApplicationController
 
   def show
     @university = University.find(params[:id])
-    @courses = @university.courses.includes(:department, :institution, :tags, :education_board)
+    @courses = @university.courses.includes(:department, :tags)
                         .page(params[:page])
                         .per(6)
   end

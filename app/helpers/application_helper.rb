@@ -20,10 +20,6 @@ module ApplicationHelper
       ]
     end
   
-    def institutions
-      Institution.all
-    end
-  
     def statuses
       ["Active", "Inactive"]
     end
