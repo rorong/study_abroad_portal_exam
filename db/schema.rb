@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_04_14_063405) do
+ActiveRecord::Schema[7.1].define(version: 2025_04_15_100313) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -20,6 +20,14 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_14_063405) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["education_board_id"], name: "index_academic_levels_on_education_board_id"
+  end
+
+  create_table "agencies", force: :cascade do |t|
+    t.string "name"
+    t.string "subdomain", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subdomain"], name: "index_agencies_on_subdomain", unique: true
   end
 
   create_table "course_requirements", force: :cascade do |t|
@@ -217,6 +225,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_14_063405) do
     t.string "university_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "agency_id"
+    t.index ["agency_id"], name: "index_courses_on_agency_id"
     t.index ["course_code"], name: "index_courses_on_course_code"
     t.index ["creator_id"], name: "index_courses_on_creator_id"
     t.index ["department_id"], name: "index_courses_on_department_id"
@@ -424,6 +434,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_14_063405) do
     t.string "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
+    t.bigint "agency_id"
+    t.index ["agency_id"], name: "index_users_on_agency_id"
     t.index ["email"], name: "index_users_on_email"
     t.index ["email_address"], name: "index_users_on_email_address"
     t.index ["record_id"], name: "index_users_on_record_id"
@@ -440,6 +452,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_14_063405) do
   add_foreign_key "course_test_requirements", "standardized_tests"
   add_foreign_key "course_universities", "courses"
   add_foreign_key "course_universities", "universities"
+  add_foreign_key "courses", "agencies"
   add_foreign_key "courses", "departments"
   add_foreign_key "courses", "users", column: "creator_id"
   add_foreign_key "courses", "users", column: "modifier_id"
@@ -450,4 +463,5 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_14_063405) do
   add_foreign_key "subjects", "academic_levels"
   add_foreign_key "subjects", "departments"
   add_foreign_key "subjects", "education_boards"
+  add_foreign_key "users", "agencies"
 end

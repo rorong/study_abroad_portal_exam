@@ -11,7 +11,7 @@
   <%# Optimize filter processing by caching the lookups %>
   <% selected_filters = {}.tap do |filters|
     if params[:department_id].present?
-      filters[:department_id] = departments.find { |d| d.id.to_s == params[:department_id] }&.name
+      filters[:department_id] = @available_departments.find { |d| d.id.to_s == params[:department_id] }&.name
     end
     filters[:intake] = params[:intake] if params[:intake].present?
     filters[:current_status] = params[:current_status] if params[:current_status].present?
@@ -38,7 +38,7 @@
       filters[:tuition_fee] = "Tuition Fee (#{tuition_range.join(' - ')})"
     end
     
-    filters[:university_id] = universities.find { |u| u.id.to_s == params[:university_id] }&.name if params[:university_id].present?
+    filters[:university_id] = @available_universities.find { |u| u.id.to_s == params[:university_id] }&.name if params[:university_id].present?
     
     # Add new university-related filters
     filters[:university_country] = params[:university_country] if params[:university_country].present?

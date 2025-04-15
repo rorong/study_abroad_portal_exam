@@ -1,37 +1,4 @@
 module ApplicationHelper
-    def departments
-      Department.all
-    end
-  
-    def intakes
-      [
-        "January",
-        "February", 
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December"
-      ]
-    end
-  
-    def statuses
-      ["Active", "Inactive"]
-    end
-  
-    def delivery_methods
-      ["Full Time", "Part Time", "Online"]
-    end
-  
-    def tags
-      Tag.all
-    end
-    
     def back_button(default = root_path, text = 'Back')
       link_to text, request.referer || default, class: 'btn btn-secondary'
     end

@@ -1,12 +1,14 @@
 require 'devise'
 
 class User < ApplicationRecord
+  acts_as_tenant(:agency)
   extend Devise::Models
   # Include default Devise modules
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable, :omniauthable, omniauth_providers: [:google_oauth2]
 
   self.primary_key = 'id'
+
   has_many :created_universities, class_name: "University", foreign_key: "created_by_id", primary_key: "record_id"
   has_many :modified_universities, class_name: "University", foreign_key: "modified_by_id", primary_key: "record_id"
   has_many :owned_universities, class_name: "University", foreign_key: "university_owner_id", primary_key: "record_id"

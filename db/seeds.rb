@@ -1,4 +1,10 @@
 # Define all constants at the top
+
+# agency = Agency.create!(name: 'ongraph', subdomain: 'ongraph')
+# User.all.update(agency: agency)
+# http://ongraph.lvh.me:3000
+
+
 BOARD_NAMES = [
   "CBSE", "ICSE", "IB", "GCE", "NIOS", "TELANGANA BOARD", "Gujarat BOARD",
   "Karnataka BOARD", "Tamil Nadu Board", "Punjab State Board", "Haryana Board",

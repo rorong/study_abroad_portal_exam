@@ -1,4 +1,6 @@
 class Course < ApplicationRecord
+  # acts_as_tenant(:agency)
+
   include Elasticsearch::Model
   include Elasticsearch::Model::Callbacks
   include ElasticsearchIndexing
@@ -26,8 +28,7 @@ class Course < ApplicationRecord
   # has_many :subjects, through: :course_subject_requirements
 
   # Validations
-  validates :name, :title, :course_code, :code, presence: true
-  validates :code, uniqueness: true
+  validates :name, :title, :course_code, presence: true
   validates :duration_months, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validates :tuition_fee_international, :tuition_fee_local, :application_fee,
             numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
