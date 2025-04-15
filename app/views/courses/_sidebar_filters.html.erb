@@ -106,7 +106,7 @@
                   class: "form-control", 
                   data: { 
                     search_target: "distance",
-                    action: "input->search#search"
+                    action: "change->search#search"
                   } %>
               </div>
             </div>
@@ -201,7 +201,7 @@
             <%= f.select :tag_id,
               options_for_select(
                 @available_tags.map do |tag|
-                  ["#{tag} (#{@available_tags_counts[tag] || 0})", tag]
+                  ["#{tag.tag_name} (#{@available_tags_counts[tag.id] || 0})", tag.id]
                 end,
                 selected: params[:tag_id]
               ),
@@ -240,7 +240,7 @@
                   class: "form-control", 
                   data: { 
                     search_target: "minTuitionFee",
-                    action: "input->search#search"
+                    action: "change->search#search"
                   } %>
               </div>
               <span class="mx-2">-</span>
@@ -271,7 +271,7 @@
                   class: "form-control", 
                   data: { 
                     search_target: "maxTuitionFee",
-                    action: "input->search#search"
+                    action: "change->search#search"
                   } %>
               </div>
             </div>
@@ -282,7 +282,7 @@
                 max="<%= convert_currency(100000, 'USD', session[:currency]) %>" 
                 step="<%= convert_currency(1000, 'USD', session[:currency]) %>"
                 data-search-target="tuitionFeeSlider"
-                data-action="input->search#updateTuitionFeeInputs"
+                data-action="change->search#updateTuitionFeeInputs"
                 value="<%= params[:max_tuition_fee] || convert_currency(100000, 'USD', session[:currency]) %>">
             </div>
           </div>
@@ -295,7 +295,7 @@
                 class: "form-control form-control-sm me-2", 
                 data: { 
                   search_target: "minInternship",
-                  action: "input->search#search"
+                  action: "change->search#search"
                 } %>
               <span class="mx-2">-</span>
               <%= f.number_field :max_internship, 
@@ -304,7 +304,7 @@
                 class: "form-control form-control-sm", 
                 data: { 
                   search_target: "maxInternship",
-                  action: "input->search#search"
+                  action: "change->search#search"
                 } %>
             </div>
             <div class="mt-2">
@@ -314,7 +314,7 @@
                 max="24" 
                 step="1"
                 data-search-target="internshipSlider"
-                data-action="input->search#updateInternshipInputs"
+                data-action="change->search#updateInternshipInputs"
                 value="<%= params[:max_internship] || 24 %>">
             </div>
           </div>
@@ -327,7 +327,7 @@
               class: "form-control form-control-sm me-2", 
               data: { 
                 search_target: "minWorldRanking",
-                action: "input->search#search"
+                action: "change->search#search"
               } %>
             <span class="mx-2">-</span>
             <%= f.number_field :max_world_ranking, 
@@ -336,7 +336,7 @@
               class: "form-control form-control-sm", 
               data: { 
                 search_target: "maxWorldRanking",
-                action: "input->search#search"
+                action: "change->search#search"
               } %>
           </div>
           <div class="mt-2">
@@ -346,7 +346,7 @@
               max="1000" 
               step="10"
               data-search-target="worldRankingSlider"
-              data-action="input->search#updateWorldRankingInputs"
+              data-action="change->search#updateWorldRankingInputs"
               value="<%= params[:max_world_ranking] || 1000 %>">
           </div>
         </div>
@@ -359,7 +359,7 @@
               class: "form-control form-control-sm me-2", 
               data: { 
                 search_target: "minQsRanking",
-                action: "input->search#search"
+                action: "change->search#search"
               } %>
             <span class="mx-2">-</span>
             <%= f.number_field :max_qs_ranking, 
@@ -368,7 +368,7 @@
               class: "form-control form-control-sm", 
               data: { 
                 search_target: "maxQsRanking",
-                action: "input->search#search"
+                action: "change->search#search"
               } %>
           </div>
           <div class="mt-2">
@@ -378,7 +378,7 @@
               max="1000" 
               step="10"
               data-search-target="qsRankingSlider"
-              data-action="input->search#updateQsRankingInputs"
+              data-action="change->search#updateQsRankingInputs"
               value="<%= params[:max_qs_ranking] || 1000 %>">
           </div>
         </div>
@@ -391,7 +391,7 @@
               class: "form-control form-control-sm me-2", 
               data: { 
                 search_target: "minNationalRanking",
-                action: "input->search#search"
+                action: "change->search#search"
               } %>
             <span class="mx-2">-</span>
             <%= f.number_field :max_national_ranking, 
@@ -400,7 +400,7 @@
               class: "form-control form-control-sm", 
               data: { 
                 search_target: "maxNationalRanking",
-                action: "input->search#search"
+                action: "change->search#search"
               } %>
           </div>
           <div class="mt-2">
@@ -410,7 +410,7 @@
               max="500" 
               step="5"
               data-search-target="nationalRankingSlider"
-              data-action="input->search#updateNationalRankingInputs"
+              data-action="change->search#updateNationalRankingInputs"
               value="<%= params[:max_national_ranking] || 500 %>">
           </div>
         </div>
@@ -423,7 +423,7 @@
               class: "form-control form-control-sm me-2", 
               data: { 
                 search_target: "minDuration",
-                action: "input->search#search"
+                action: "change->search#search"
               } %>
             <span class="mx-2">-</span>
             <%= f.number_field :max_duration, 
@@ -432,7 +432,7 @@
               class: "form-control form-control-sm", 
               data: { 
                 search_target: "maxDuration",
-                action: "input->search#search"
+                action: "change->search#search"
               } %>
           </div>
           <div class="mt-2">
@@ -442,7 +442,7 @@
               max="48" 
               step="1"
               data-search-target="durationSlider"
-              data-action="input->search#updateDurationInputs"
+              data-action="change->search#updateDurationInputs"
               value="<%= params[:max_duration] || 48 %>">
           </div>
         </div>
@@ -476,7 +476,7 @@
                   class: "form-control", 
                   data: { 
                     search_target: "minApplicationFee",
-                    action: "input->search#search"
+                    action: "change->search#search"
                   } %>
               </div>
               <span class="mx-2">-</span>
@@ -507,7 +507,7 @@
                   class: "form-control", 
                   data: { 
                     search_target: "maxApplicationFee",
-                    action: "input->search#search"
+                    action: "change->search#search"
                   } %>
               </div>
             </div>
@@ -518,7 +518,7 @@
                 max="<%= convert_currency(500, 'USD', session[:currency]) %>" 
                 step="<%= convert_currency(10, 'USD', session[:currency]) %>"
                 data-search-target="applicationFeeSlider"
-                data-action="input->search#updateApplicationFeeInputs"
+                data-action="change->search#updateApplicationFeeInputs"
                 value="<%= params[:max_application_fee] || convert_currency(500, 'USD', session[:currency]) %>">
             </div>
           </div>

@@ -752,46 +752,46 @@ export default class SearchController extends Controller {
     }
   }
 
-  updatePerPage(event) {
-    // Get the selected per_page value
-    const perPage = this.perPageTarget.value;
+  // updatePerPage(event) {
+  //   // Get the selected per_page value
+  //   const perPage = this.perPageTarget.value;
     
-    // Find the closest form element
-    const form = event.target.closest('form');
+  //   // Find the closest form element
+  //   const form = event.target.closest('form');
     
-    if (form) {
-      // Get current URL parameters to preserve values
-      const urlParams = new URLSearchParams(window.location.search);
+  //   if (form) {
+  //     // Get current URL parameters to preserve values
+  //     const urlParams = new URLSearchParams(window.location.search);
       
-      // Create a new URLSearchParams object
-      const newParams = new URLSearchParams();
+  //     // Create a new URLSearchParams object
+  //     const newParams = new URLSearchParams();
       
-      // First, add all existing URL parameters to preserve them
-      for (const [key, value] of urlParams.entries()) {
-        // Skip the per_page parameter as we'll set it explicitly
-        if (key === 'per_page') {
-          continue;
-        }
-        newParams.append(key, value);
-      }
+  //     // First, add all existing URL parameters to preserve them
+  //     for (const [key, value] of urlParams.entries()) {
+  //       // Skip the per_page parameter as we'll set it explicitly
+  //       if (key === 'per_page') {
+  //         continue;
+  //       }
+  //       newParams.append(key, value);
+  //     }
       
-      // Then add the per_page parameter
-      newParams.set('per_page', perPage);
+  //     // Then add the per_page parameter
+  //     newParams.set('per_page', perPage);
       
-      // Submit the form with the preserved parameters
-      Turbo.visit(form.action + '?' + newParams.toString(), { action: "replace" });
-    }
-  }
+  //     // Submit the form with the preserved parameters
+  //     Turbo.visit(form.action + '?' + newParams.toString(), { action: "replace" });
+  //   }
+  // }
 
-  convertCurrency(amount, fromCurrency, toCurrency) {
-    // Convert to USD first if not already in USD
-    const usdAmount = fromCurrency === 'USD' ? amount : amount / this.exchangeRates[fromCurrency];
+  // convertCurrency(amount, fromCurrency, toCurrency) {
+  //   // Convert to USD first if not already in USD
+  //   const usdAmount = fromCurrency === 'USD' ? amount : amount / this.exchangeRates[fromCurrency];
     
-    // Then convert to target currency
-    const convertedAmount = usdAmount * this.exchangeRates[toCurrency];
+  //   // Then convert to target currency
+  //   const convertedAmount = usdAmount * this.exchangeRates[toCurrency];
     
-    // Round to 2 decimal places
-    return Math.round(convertedAmount * 100) / 100;
-  }
+  //   // Round to 2 decimal places
+  //   return Math.round(convertedAmount * 100) / 100;
+  // }
 }
  

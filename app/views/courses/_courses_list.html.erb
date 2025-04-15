@@ -29,9 +29,6 @@
     if params[:tag_id].present?
       filters[:tag_id] = tags.find { |t| t.id.to_s == params[:tag_id] }&.tag_name
     end
-    if params[:education_board_id].present?
-      filters[:education_board_id] = EducationBoard.find(params[:education_board_id]).board_name
-    end
     
     # Handle tuition fee range
     if params[:min_tuition_fee].present? || params[:max_tuition_fee].present?
@@ -194,7 +191,7 @@
         <% end %>
       </div>
       <%# Add Map View button if we have universities from search results %>
-      <% if @courses.any? && @all_university_ids.present? %>
+      <% if @courses_by_university.any? && @all_university_ids.present? %>
         <%= link_to map_search_universities_path(university_ids: @all_university_ids.join(',')), class: "btn btn-success me-2", data: { turbo: false } do %>
           <i class="fas fa-map-marked-alt me-1"></i> View on Map
         <% end %>
@@ -223,7 +220,7 @@
       <% end %>
     </div>
   </div>
-  <% if @courses.any? %>
+  <% if @courses_by_university.any? %>
     <% @courses_by_university.each do |university, university_courses| %>
       <% if university.present? %>
         <div class="mb-5">
@@ -355,7 +352,7 @@
   <% end %>
 
   <%# Use the pagination partial %>
-  <%= paginate @courses, params: { per_page: params[:per_page] } %>
+  <%= paginate @courses_by_university, params: { per_page: params[:per_page] } %>
   <%#= render 'courses/pagination', courses: @courses, query_params: query_params %>
    
 </div>

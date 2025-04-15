@@ -57,6 +57,25 @@ CHECK VERIFY MAPPINGS FOR EACH MODEL
 
 curl -X GET "http://elastic:12345678@localhost:9200/courses/_mapping?pretty"
 
+ curl -X GET "http://elastic:12345678@localhost:9200/courses/_search?pretty" -H 'Content-Type: application/json' -d '
+
+
+curl -X GET "http://elastic:12345678@localhost:9200/courses/_search?pretty" -H 'Content-Type: application/json' -d '
+{
+  "query": {
+    "nested": {
+      "path": "universities",
+      "query": {
+        "exists": { "field": "universities.location" }
+      }
+    }
+  },
+  "_source": ["universities.name", "universities.location"],
+  "size": 5
+}'
+
+
+
 courses = Course.advanced_search('', {"lateral_entry_possible": false}, "application_fee_asc").records.count
 
 

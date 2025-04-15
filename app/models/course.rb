@@ -48,7 +48,9 @@ class Course < ApplicationRecord
       include: {
         universities: { only: [:id, :record_id, :name, :code, :category, :city, :address,
          :country, :state, :post_code, :world_ranking, :qs_ranking, :national_ranking,
-          :application_fee, :lateral_entry_allowed, :latitude, :longitude, :type_of_university] },
+          :application_fee, :lateral_entry_allowed, :latitude, :longitude, :type_of_university],
+          methods: [:location]  # 👉 This is the key fix 
+        },
         tags: { only: [:id, :tag_name] },
         department: { only: [:id, :name] },
         course_requirement: { only: [:id, :lateral_entry_possible] }
@@ -195,82 +197,111 @@ class Course < ApplicationRecord
     end
 
     # # Filters
-    # if filters[:min_tuition_fee].present? || filters[:max_tuition_fee].present?
-    #   filters[:min_tuition_fee] ||= 0
-    #   filters[:max_tuition_fee] ||= Float::INFINITY
-    #   search_definition[:query][:bool][:filter] << {
-    #       range: { tuition_fee_international: { gte: filters[:min_tuition_fee], lte: filters[:max_tuition_fee] } }
-    #     }
-    # end
+    if filters[:min_tuition_fee].present? || filters[:max_tuition_fee].present?
+      filters[:min_tuition_fee] ||= 0
+      filters[:max_tuition_fee] ||= Float::INFINITY
+      search_definition[:query][:bool][:filter] << {
+          range: { tuition_fee_international: { gte: filters[:min_tuition_fee], lte: filters[:max_tuition_fee] } }
+        }
+    end
 
-    # if filters[:min_duration].present? || filters[:max_duration].present?
-    #   min_duration = filters[:min_duration].present? ? filters[:min_duration].to_i : 0
-    #   max_duration = filters[:max_duration].present? ? filters[:max_duration].to_i : Float::INFINITY
+    #looking on it 
+    if filters[:min_duration].present? || filters[:max_duration].present?
+      min_duration = filters[:min_duration].present? ? filters[:min_duration].to_i : 0
+      max_duration = filters[:max_duration].present? ? filters[:max_duration].to_i : Float::INFINITY
 
-    #   search_definition[:query][:bool][:filter] << {
-    #       range: { course_duration: { gte: min_duration, lte: max_duration } }
-    #     }
-    # end
+      search_definition[:query][:bool][:filter] << {
+          range: { course_duration: { gte: min_duration, lte: max_duration } }
+        }
+    end
 
-    # if filters[:min_internship].present? || filters[:max_internship].present?
-    #   min_internship = filters[:min_internship].present? ? filters[:min_internship].to_i : 0
-    #   max_internship = filters[:max_internship].present? ? filters[:max_internship].to_i : Float::INFINITY
+    #looking on it 
+    if filters[:min_internship].present? || filters[:max_internship].present?
+      min_internship = filters[:min_internship].present? ? filters[:min_internship].to_i : 0
+      max_internship = filters[:max_internship].present? ? filters[:max_internship].to_i : Float::INFINITY
 
-    #   search_definition[:query][:bool][:filter] << {
-    #       range: { internship_period: { gte: min_internship, lte: max_internship } }
-    #     }
-    # end
+      search_definition[:query][:bool][:filter] << {
+          range: { internship_period: { gte: min_internship, lte: max_internship } }
+        }
+    end
 
-    # if filters[:min_application_fee].present? || filters[:max_application_fee].present?
-    #   min_application_fee = filters[:min_application_fee].present? ? filters[:min_application_fee].to_i : 0
-    #   max_application_fee = filters[:max_application_fee].present? ? filters[:max_application_fee].to_i : Float::INFINITY
+    if filters[:min_application_fee].present? || filters[:max_application_fee].present?
+      min_application_fee = filters[:min_application_fee].present? ? filters[:min_application_fee].to_i : 0
+      max_application_fee = filters[:max_application_fee].present? ? filters[:max_application_fee].to_i : Float::INFINITY
 
-    #   search_definition[:query][:bool][:filter] << {
-    #       range: { application_fee: { gte: min_application_fee, lte: max_application_fee } }
-    #     }
-    # end
+      search_definition[:query][:bool][:filter] << {
+          range: { application_fee: { gte: min_application_fee, lte: max_application_fee } }
+        }
+    end
 
+    if filters[:tag_id].present?
+      search_definition[:query][:bool][:filter] << {
+        nested: {
+          path: 'tags',
+          query: {
+            terms: { 'tags.id': filters[:tag_id] }
+          }
+        }
+      }
 
-    # if filters[:tag_id].present?
-    #   search_definition[:query][:bool][:filter] << {
-    #     nested: {
-    #       path: 'tags',
-    #       query: {
-    #         terms: { 'tags.id': filters[:tag_id] }
-    #       }
-    #     }
-    #   }
-    # end
+      # search_definition[:query][:bool][:filter] << {
+      #   nested: {
+      #     path: 'tags',
+      #     query: {
+      #       bool: {
+      #         must: [
+      #           {
+      #             terms: { 'tags.id': filters[:tag_id] }
+      #           },
+      #           {
+      #             exists: { field: 'tags.tag_name' }
+      #           }
+      #         ],
+      #         must_not: [
+      #           {
+      #             script: {
+      #               script: {
+      #                 source: "doc['tags.tag_name'].value == ''",
+      #                 lang: "painless"
+      #               }
+      #             }
+      #           }
+      #         ]
+      #       }
+      #     }
+      #   }
+      # }
+    end
 
-    # if filters[:intake].present?
-    #   search_definition[:query][:bool][:filter] << {
-    #     term: { intake: filters[:intake] }
-    #   }
-    # end
+    if filters[:intake].present?
+      search_definition[:query][:bool][:filter] << {
+        term: { intake: filters[:intake] }
+      }
+    end
 
-    # if filters[:allow_backlogs].present?
-    #   search_definition[:query][:bool][:filter] << {
-    #     term: { allow_backlogs: filters[:allow_backlogs] }
-    #   }
-    # end
+    if filters[:allow_backlogs].present?
+      search_definition[:query][:bool][:filter] << {
+        term: { allow_backlogs: filters[:allow_backlogs] }
+      }
+    end
 
-    # if filters[:current_status].present?
-    #   search_definition[:query][:bool][:filter] << {
-    #     term: { current_status: filters[:current_status] }
-    #   }
-    # end
+    if filters[:current_status].present?
+      search_definition[:query][:bool][:filter] << {
+        term: { current_status: filters[:current_status] }
+      }
+    end
 
-    # if filters[:delivery_method].present?
-    #   search_definition[:query][:bool][:filter] << {
-    #     term: { delivery_method: filters[:delivery_method] }
-    #   }
-    # end
+    if filters[:delivery_method].present?
+      search_definition[:query][:bool][:filter] << {
+        term: { delivery_method: filters[:delivery_method] }
+      }
+    end
 
-    # if filters[:level_of_course].present?
-    #   search_definition[:query][:bool][:filter] << {
-    #     term: { level_of_course: filters[:level_of_course] }
-    #   }
-    # end
+    if filters[:level_of_course].present?
+      search_definition[:query][:bool][:filter] << {
+        term: { level_of_course: filters[:level_of_course] }
+      }
+    end
 
     if filters[:department_id].present?
        # Use a nested query for department.name
@@ -284,153 +315,148 @@ class Course < ApplicationRecord
       }
     end
 
-    # if filters[:lateral_entry_possible].present?
-    #    # Use a nested query for department.name
-    #   search_definition[:query][:bool][:filter] << {
-    #     nested: {
-    #       path: "course_requirement",
-    #       query: {
-    #         term: { "course_requirement.lateral_entry_possible": filters[:lateral_entry_possible] }
-    #       }
-    #     }
-    #   }
-    # end
+    if filters[:lateral_entry_possible].present?
+       # Use a nested query for department.name
+      search_definition[:query][:bool][:filter] << {
+        nested: {
+          path: "course_requirement",
+          query: {
+            term: { "course_requirement.lateral_entry_possible": filters[:lateral_entry_possible] }
+          }
+        }
+      }
+    end
 
     # #TEST
-    # if filters[:type_of_university].present?
-    #   search_definition[:query][:bool][:filter] << {
-    #     nested: {
-    #       path: "universities",
-    #       query: {
-    #         term: { "universities.type_of_university": filters[:type_of_university] }
-    #       }
-    #     }
-    #   }
-    # end
+    if filters[:type_of_university].present?
+      search_definition[:query][:bool][:filter] << {
+        nested: {
+          path: "universities",
+          query: {
+            term: { "universities.type_of_university": filters[:type_of_university] }
+          }
+        }
+      }
+    end
 
-    # if filters[:university_id].present?
-    #   search_definition[:query][:bool][:filter] << {
-    #     nested: {
-    #       path: "universities",
-    #       query: {
-    #         term: { "universities.id": filters[:university_id] }
-    #       }
-    #     }
-    #   }
-    # end
+    if filters[:university_id].present?
+      search_definition[:query][:bool][:filter] << {
+        nested: {
+          path: "universities",
+          query: {
+            term: { "universities.id": filters[:university_id] }
+          }
+        }
+      }
+    end
 
-    # if filters[:university_country].present?
-    #   search_definition[:query][:bool][:filter] << {
-    #     nested: {
-    #       path: "universities",
-    #       query: {
-    #         term: { "universities.country.raw": filters[:university_country] }
-    #       }
-    #     }
-    #   }
-    # end
+    if filters[:university_country].present?
+      search_definition[:query][:bool][:filter] << {
+        nested: {
+          path: "universities",
+          query: {
+            term: { "universities.country.raw": filters[:university_country] }
+          }
+        }
+      }
+    end
 
-    # if filters[:university_address].present?
-    #   search_definition[:query][:bool][:filter] << {
-    #     nested: {
-    #       path: "universities",
-    #       query: {
-    #         match: {
-    #           "universities.address": filters[:university_address]
-    #         }
-    #       }
-    #     }
-    #   }
-    # end
+    if filters[:university_address].present? && filters[:latitude].present? && filters[:longitude].present? && filters[:distance].present?
+      
+      search_definition[:query][:bool][:filter] << {
+        nested: {
+          path: "universities",
+          query: {
+            bool: {
+              filter: [
+                {
+                  geo_distance: {
+                    distance: "#{filters[:distance]}km",
+                    "universities.location": {
+                      lat: filters[:latitude].to_f,
+                      lon: filters[:longitude].to_f
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    end
 
+    if filters[:min_world_ranking].present? || filters[:max_world_ranking].present?
+      min_world_ranking = filters[:min_world_ranking].present? ? filters[:min_world_ranking].to_i : 0
+      max_world_ranking = filters[:max_world_ranking].present? ? filters[:max_world_ranking].to_i : Float::INFINITY
 
-    # if filters[:min_world_ranking].present? || filters[:max_world_ranking].present?
-    #   min_world_ranking = filters[:min_world_ranking].present? ? filters[:min_world_ranking].to_i : 0
-    #   max_world_ranking = filters[:max_world_ranking].present? ? filters[:max_world_ranking].to_i : Float::INFINITY
+      search_definition[:query][:bool][:filter] << {
+          nested: {
+            path: "universities",
+            query: {
+              range: {
+                "universities.world_ranking": {
+                  gte: min_world_ranking,
+                  lte: max_world_ranking
+                }.compact # removes nils if one of them is missing
+              }
+            }
+          }
+        }
+    end
 
-    #   search_definition[:query][:bool][:filter] << {
-    #       nested: {
-    #         path: "universities",
-    #         query: {
-    #           range: {
-    #             "universities.world_ranking": {
-    #               gte: min_world_ranking,
-    #               lte: max_world_ranking
-    #             }.compact # removes nils if one of them is missing
-    #           }
-    #         }
-    #       }
-    #     }
-    # end
+    if filters[:min_qs_ranking].present? || filters[:max_qs_ranking].present?
+      min_qs_ranking = filters[:min_qs_ranking].present? ? filters[:min_qs_ranking].to_i : 0
+      max_qs_ranking = filters[:max_qs_ranking].present? ? filters[:max_qs_ranking].to_i : Float::INFINITY
 
-    # if filters[:min_qs_ranking].present? || filters[:max_qs_ranking].present?
-    #   min_qs_ranking = filters[:min_qs_ranking].present? ? filters[:min_qs_ranking].to_i : 0
-    #   max_qs_ranking = filters[:max_qs_ranking].present? ? filters[:max_qs_ranking].to_i : Float::INFINITY
+      search_definition[:query][:bool][:filter] << {
+          nested: {
+            path: "universities",
+            query: {
+              range: {
+                "universities.qs_ranking": {
+                  gte: min_qs_ranking,
+                  lte: max_qs_ranking
+                }.compact # removes nils if one of them is missing
+              }
+            }
+          }
+        }
+    end
 
-    #   search_definition[:query][:bool][:filter] << {
-    #       nested: {
-    #         path: "universities",
-    #         query: {
-    #           range: {
-    #             "universities.qs_ranking": {
-    #               gte: min_qs_ranking,
-    #               lte: max_qs_ranking
-    #             }.compact # removes nils if one of them is missing
-    #           }
-    #         }
-    #       }
-    #     }
-    # end
+    if filters[:min_national_ranking].present? || filters[:max_national_ranking].present?
+      min_national_ranking = filters[:min_national_ranking].present? ? filters[:min_national_ranking].to_i : 0
+      max_national_ranking = filters[:max_national_ranking].present? ? filters[:max_national_ranking].to_i : Float::INFINITY
 
-    # if filters[:min_national_ranking].present? || filters[:max_national_ranking].present?
-    #   min_national_ranking = filters[:min_national_ranking].present? ? filters[:min_national_ranking].to_i : 0
-    #   max_national_ranking = filters[:max_national_ranking].present? ? filters[:max_national_ranking].to_i : Float::INFINITY
-
-    #   search_definition[:query][:bool][:filter] << {
-    #       nested: {
-    #         path: "universities",
-    #         query: {
-    #           range: {
-    #             "universities.national_ranking": {
-    #               gte: min_national_ranking,
-    #               lte: max_national_ranking
-    #             }.compact # removes nils if one of them is missing
-    #           }
-    #         }
-    #       }
-    #     }
-    # end
-
-
-    # if filters[:latitude].present? && filters[:longitude].present?
-    #   lat = filters[:latitude].to_f
-    #   lng = filters[:longitude].to_f
-    #   distance = filters[:distance].present? ? filters[:distance].to_f : 50 # Default to 50 km if not provided
-
-    #   # Apply the geo_distance filter
-    #   search_definition[:query][:bool][:filter] << {
-    #     geo_distance: {
-    #       distance: "#{distance}km",  # Distance filter in km (you can change this to "mi" for miles, etc.)
-    #       "universities.location": { lat: lat, lon: lng }
-    #     }
-    #   }
-    # end
+      search_definition[:query][:bool][:filter] << {
+          nested: {
+            path: "universities",
+            query: {
+              range: {
+                "universities.national_ranking": {
+                  gte: min_national_ranking,
+                  lte: max_national_ranking
+                }.compact # removes nils if one of them is missing
+              }
+            }
+          }
+        }
+    end
 
     # # Sorting 
-    # case sort
-    #   when 'application_fee_asc'
-    #     search_definition[:sort] = [{ application_fee: { order: 'asc', missing: '_last' } }]
-    #   when 'application_fee_desc'
-    #     search_definition[:sort] = [{ application_fee: { order: 'desc', missing: '_last' } }]
-    #   when 'tuition_fee_asc'
-    #     search_definition[:sort] = [{ tuition_fee_international: { order: 'asc', missing: '_last' } }]
-    #   when 'tuition_fee_desc'
-    #     search_definition[:sort] = [{ tuition_fee_international: { order: 'desc', missing: '_last' } }]
-    #   when 'course_duration_asc'
-    #     search_definition[:sort] = [{ course_duration: { order: 'asc', missing: '_last' } }]
-    #   when 'course_duration_desc'
-    #     search_definition[:sort] = [{ course_duration: { order: 'desc', missing: '_last' } }]
-    # end
+    case sort
+      when 'application_fee_asc'
+        search_definition[:sort] = [{ application_fee: { order: 'asc', missing: '_last' } }]
+      when 'application_fee_desc'
+        search_definition[:sort] = [{ application_fee: { order: 'desc', missing: '_last' } }]
+      when 'tuition_fee_asc'
+        search_definition[:sort] = [{ tuition_fee_international: { order: 'asc', missing: '_last' } }]
+      when 'tuition_fee_desc'
+        search_definition[:sort] = [{ tuition_fee_international: { order: 'desc', missing: '_last' } }]
+      when 'course_duration_asc'
+        search_definition[:sort] = [{ course_duration: { order: 'asc', missing: '_last' } }]
+      when 'course_duration_desc'
+        search_definition[:sort] = [{ course_duration: { order: 'desc', missing: '_last' } }]
+    end
 
       __elasticsearch__.search(search_definition)
     end

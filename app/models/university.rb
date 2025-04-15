@@ -14,7 +14,8 @@ class University < ApplicationRecord
 
     # Combine latitude and longitude into a location for Elasticsearch
     def location
-      { lat: latitude, lon: longitude } # lat and lon should be the fields in your model
+      return nil unless latitude.present? && longitude.present?
+      { lat: latitude.to_f, lon: longitude.to_f }
     end
 
     # Custom JSON for Elasticsearch indexing
@@ -22,7 +23,8 @@ class University < ApplicationRecord
       self.as_json(
         only: [:id, :record_id, :name, :code, :category, :city, :address,
          :country, :state, :post_code, :world_ranking, :qs_ranking, :national_ranking,
-          :application_fee, :lateral_entry_allowed, :latitude, :longitude, :type_of_university]
+          :application_fee, :lateral_entry_allowed, :latitude, :longitude, :type_of_university],
+          methods: [:location]  # 👉 This is the key fix 
       )
     end
 
