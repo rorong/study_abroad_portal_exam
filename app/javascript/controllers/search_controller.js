@@ -35,7 +35,7 @@ export default class SearchController extends Controller {
     };
     
     // Fetch exchange rates from server
-    this.fetchExchangeRates();
+    // this.fetchExchangeRates();
     
     // Add click outside listener only if queryResults target exists
     if (this.hasQueryResultsTarget) {
@@ -68,26 +68,26 @@ export default class SearchController extends Controller {
     });
   }
 
-  fetchExchangeRates() {
-    fetch('/exchange_rates')
-      .then(response => {
-        if (response.ok) {
-          return response.json();
-        }
-        throw new Error('Failed to fetch exchange rates');
-      })
-      .then(data => {
-        this.exchangeRates = data;
-        console.log('Exchange rates updated:', this.exchangeRates);
+  // fetchExchangeRates() {
+  //   fetch('/exchange_rates')
+  //     .then(response => {
+  //       if (response.ok) {
+  //         return response.json();
+  //       }
+  //       throw new Error('Failed to fetch exchange rates');
+  //     })
+  //     .then(data => {
+  //       this.exchangeRates = data;
+  //       console.log('Exchange rates updated:', this.exchangeRates);
         
-        // Reinitialize sliders with new exchange rates
-        this.initializeSliders();
-      })
-      .catch(error => {
-        console.error('Error fetching exchange rates:', error);
-        // Keep using the default hardcoded rates
-      });
-  }
+  //       // Reinitialize sliders with new exchange rates
+  //       this.initializeSliders();
+  //     })
+  //     .catch(error => {
+  //       console.error('Error fetching exchange rates:', error);
+  //       // Keep using the default hardcoded rates
+  //     });
+  // }
 
   initializeSliders() {
     // Initialize duration slider if it exists
@@ -609,7 +609,7 @@ export default class SearchController extends Controller {
           data-course-id="${id}"
           data-action="click->search#selectCourse">
         <div class="fw-bold">${name}</div>
-        <div class="small text-muted">${university}</div>
+        <!-- <div class="small text-muted">${university}</div>-->
       </div>
     `).join('');
     console.log("Generated HTML:", resultsHtml);
@@ -694,21 +694,21 @@ export default class SearchController extends Controller {
     }
   }
 
-  clear(event) {
-    event.preventDefault();
-    // Clear the search input if it exists
-    if (this.hasInputTarget) {
-      this.inputTarget.value = '';
-    }
-    // Hide the results container
-    if (this.hasQueryResultsTarget) {
-      this.queryResultsTarget.classList.add('d-none');
-    }
-    // Clear the results container
-    if (this.hasResultsContainerTarget) {
-      this.resultsContainerTarget.innerHTML = '';
-    }
-  }
+  // clear(event) {
+  //   event.preventDefault();
+  //   // Clear the search input if it exists
+  //   if (this.hasInputTarget) {
+  //     this.inputTarget.value = '';
+  //   }
+  //   // Hide the results container
+  //   if (this.hasQueryResultsTarget) {
+  //     this.queryResultsTarget.classList.add('d-none');
+  //   }
+  //   // Clear the results container
+  //   if (this.hasResultsContainerTarget) {
+  //     this.resultsContainerTarget.innerHTML = '';
+  //   }
+  // }
 
   handleAddressKeydown(event) {
     if (event.key === 'Enter') {

@@ -211,81 +211,34 @@
             %>
           </div>
           <div class="col-12">
-            <%= f.label :min_tuition_fee, "Tuition Fee", class: "form-label" %>
-            <div class="d-flex align-items-center">
-              <div class="input-group input-group-sm me-2">
-                <span class="input-group-text">
-                  <%= case session[:currency]
-                      when 'USD' then '$'
-                      when 'GBP' then '£'
-                      when 'EUR' then '€'
-                      when 'AED' then 'د.إ'
-                      when 'SGD' then 'S$'
-                      when 'AUD' then 'A$'
-                      when 'NZD' then 'NZ$'
-                      when 'JPY' then '¥'
-                      when 'CHF' then 'Fr'
-                      when 'THB' then '฿'
-                      when 'MYR' then 'RM'
-                      when 'CNY' then '¥'
-                      when 'HKD' then 'HK$'
-                      when 'CAD' then 'C$'
-                      when 'INR' then '₹'
-                      else '$'
-                      end %>
-                </span>
-                <%= f.number_field :min_tuition_fee, 
-                  value: params[:min_tuition_fee],
-                  placeholder: "Min",
-                  class: "form-control", 
-                  data: { 
-                    search_target: "minTuitionFee",
-                    action: "change->search#search"
-                  } %>
+          <%= f.label :min_tuition_fee, "Tuition Fee", class: "form-label" %>
+          <div class="d-flex align-items-center">
+            <% [:min_tuition_fee, :max_tuition_fee].each_with_index do |field, index| %>
+              <div class="input-group input-group-sm <%= 'me-2' if index == 0 %>">
+                <span class="input-group-text"><%= currency_symbol %></span>
+                <%= f.number_field field,
+                      value: params[field],
+                      placeholder: index.zero? ? "Min" : "Max",
+                      class: "form-control",
+                      data: {
+                        search_target: "#{field.to_s.camelize(:lower)}",
+                        action: "change->search#search"
+                      } %>
               </div>
-              <span class="mx-2">-</span>
-              <div class="input-group input-group-sm">
-                <span class="input-group-text">
-                  <%= case session[:currency]
-                      when 'USD' then '$'
-                      when 'GBP' then '£'
-                      when 'EUR' then '€'
-                      when 'AED' then 'د.إ'
-                      when 'SGD' then 'S$'
-                      when 'AUD' then 'A$'
-                      when 'NZD' then 'NZ$'
-                      when 'JPY' then '¥'
-                      when 'CHF' then 'Fr'
-                      when 'THB' then '฿'
-                      when 'MYR' then 'RM'
-                      when 'CNY' then '¥'
-                      when 'HKD' then 'HK$'
-                      when 'CAD' then 'C$'
-                      when 'INR' then '₹'
-                      else '$'
-                      end %>
-                </span>
-                <%= f.number_field :max_tuition_fee, 
-                  value: params[:max_tuition_fee],
-                  placeholder: "Max",
-                  class: "form-control", 
-                  data: { 
-                    search_target: "maxTuitionFee",
-                    action: "change->search#search"
-                  } %>
-              </div>
-            </div>
-            <div class="mt-2">
-              <input type="range" 
-                class="form-range" 
-                min="0" 
-                max="<%= convert_currency(100000, 'USD', session[:currency]) %>" 
-                step="<%= convert_currency(1000, 'USD', session[:currency]) %>"
-                data-search-target="tuitionFeeSlider"
-                data-action="change->search#updateTuitionFeeInputs"
-                value="<%= params[:max_tuition_fee] || convert_currency(100000, 'USD', session[:currency]) %>">
-            </div>
+              <%== '<span class="mx-2">-</span>' if index.zero? %>
+            <% end %>
           </div>
+          <div class="mt-2">
+            <input type="range" 
+              class="form-range"
+              min="0" 
+              max="<%= convert_currency(100_000, 'USD', session[:currency]) %>"
+              step="<%= convert_currency(1_000, 'USD', session[:currency]) %>"
+              data-search-target="tuitionFeeSlider"
+              data-action="change->search#updateTuitionFeeInputs"
+              value="<%= params[:max_tuition_fee] || convert_currency(100_000, 'USD', session[:currency]) %>">
+          </div>
+        </div>
           <div class="col-12">
             <%= f.label :internship_period, "Internship Period", class: "form-label" %>
             <div class="d-flex align-items-center">
@@ -446,82 +399,35 @@
               value="<%= params[:max_duration] || 48 %>">
           </div>
         </div>
-          <div class="col-12">
-            <%= f.label :application_fee, "Application Fee", class: "form-label" %>
-            <div class="d-flex align-items-center">
-              <div class="input-group input-group-sm me-2">
-                <span class="input-group-text">
-                  <%= case session[:currency]
-                      when 'USD' then '$'
-                      when 'GBP' then '£'
-                      when 'EUR' then '€'
-                      when 'AED' then 'د.إ'
-                      when 'SGD' then 'S$'
-                      when 'AUD' then 'A$'
-                      when 'NZD' then 'NZ$'
-                      when 'JPY' then '¥'
-                      when 'CHF' then 'Fr'
-                      when 'THB' then '฿'
-                      when 'MYR' then 'RM'
-                      when 'CNY' then '¥'
-                      when 'HKD' then 'HK$'
-                      when 'CAD' then 'C$'
-                      when 'INR' then '₹'
-                      else '$'
-                      end %>
-                </span>
-                <%= f.number_field :min_application_fee, 
-                  value: params[:min_application_fee],
-                  placeholder: "Min",
-                  class: "form-control", 
-                  data: { 
-                    search_target: "minApplicationFee",
-                    action: "change->search#search"
-                  } %>
-              </div>
-              <span class="mx-2">-</span>
-              <div class="input-group input-group-sm">
-                <span class="input-group-text">
-                  <%= case session[:currency]
-                      when 'USD' then '$'
-                      when 'GBP' then '£'
-                      when 'EUR' then '€'
-                      when 'AED' then 'د.إ'
-                      when 'SGD' then 'S$'
-                      when 'AUD' then 'A$'
-                      when 'NZD' then 'NZ$'
-                      when 'JPY' then '¥'
-                      when 'CHF' then 'Fr'
-                      when 'THB' then '฿'
-                      when 'MYR' then 'RM'
-                      when 'CNY' then '¥'
-                      when 'HKD' then 'HK$'
-                      when 'CAD' then 'C$'
-                      when 'INR' then '₹'
-                      else '$'
-                      end %>
-                </span>
-                <%= f.number_field :max_application_fee, 
-                  value: params[:max_application_fee],
-                  placeholder: "Max",
-                  class: "form-control", 
-                  data: { 
-                    search_target: "maxApplicationFee",
-                    action: "change->search#search"
-                  } %>
-              </div>
+        <div class="col-12">
+        <%= f.label :application_fee, "Application Fee", class: "form-label" %>
+        <div class="d-flex align-items-center">
+          <% [:min_application_fee, :max_application_fee].each_with_index do |field, index| %>
+            <div class="input-group input-group-sm <%= 'me-2' if index == 0 %>">
+              <span class="input-group-text"><%= currency_symbol %></span>
+              <%= f.number_field field,
+                    value: params[field],
+                    placeholder: index.zero? ? "Min" : "Max",
+                    class: "form-control",
+                    data: {
+                      search_target: "#{field.to_s.camelize(:lower)}",
+                      action: "change->search#search"
+                    } %>
             </div>
-            <div class="mt-2">
-              <input type="range" 
-                class="form-range" 
-                min="0" 
-                max="<%= convert_currency(500, 'USD', session[:currency]) %>" 
-                step="<%= convert_currency(10, 'USD', session[:currency]) %>"
-                data-search-target="applicationFeeSlider"
-                data-action="change->search#updateApplicationFeeInputs"
-                value="<%= params[:max_application_fee] || convert_currency(500, 'USD', session[:currency]) %>">
-            </div>
-          </div>
+            <%== '<span class="mx-2">-</span>' if index.zero? %>
+          <% end %>
+        </div>
+        <div class="mt-2">
+          <input type="range" 
+            class="form-range"
+            min="0"
+            max="<%= convert_currency(500, 'USD', session[:currency]) %>"
+            step="<%= convert_currency(10, 'USD', session[:currency]) %>"
+            data-search-target="applicationFeeSlider"
+            data-action="change->search#updateApplicationFeeInputs"
+            value="<%= params[:max_application_fee] || convert_currency(500, 'USD', session[:currency]) %>">
+        </div>
+      </div>
         </div>
       <% end %>
   </div>

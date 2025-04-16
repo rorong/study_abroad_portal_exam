@@ -1,46 +1,69 @@
-<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #fc034e;">
-  <%= link_to 'Study Portal', root_path, class: "navbar-brand" %>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom px-3">
+  <%= link_to root_path, class: "navbar-brand d-flex align-items-center gap-2" do %>
+    <%= image_tag "logo.png", alt: "Study Portal Logo", height: "60" %>
+  <% end %>
+
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
+
   <div class="collapse navbar-collapse" id="navbarNav">
+    <!-- Left Navigation -->
     <ul class="navbar-nav me-auto">
       <li class="nav-item">
-        <%= link_to 'Home', courses_path, class: "nav-link #{current_page?(courses_path) ? 'active' : ''}" %>
+        <%= link_to 'Search', courses_path, class: "nav-link #{current_page?(courses_path) ? 'active' : ''}" %>
       </li>
       <li class="nav-item">
-        <%= link_to 'Map Search', map_search_universities_path, 
-            class: "nav-link #{controller_name == 'universities' && action_name == 'map_search' ? 'active' : ''}", 
+        <%= link_to 'Map Search', map_search_universities_path,
+            class: "nav-link #{controller_name == 'universities' && action_name == 'map_search' ? 'active' : ''}",
             data: { turbo: false } %>
       </li>
-   
     </ul>
-    <ul class="navbar-nav">
-      <li class="nav-item me-3">
-        <div class="dropdown" data-controller="currency">
-          <button class="btn btn-link nav-link dropdown-toggle" type="button" id="currencyDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-action="click->currency#toggleDropdown">
-            <i class="fas fa-money-bill-wave"></i>
-            <%= session[:currency] || 'USD' %>
-          </button>
-          <ul class="dropdown-menu" aria-labelledby="currencyDropdown">
-            <% %w[USD GBP CAD EUR AED SGD AUD NZD JPY CHF THB MYR CNY HKD INR].each do |currency| %>
-              <li>
-                <%= form_tag set_currency_path, method: :post, data: { turbo: false } do %>
-                  <%= hidden_field_tag :currency, currency %>
-                  <%= button_tag currency, 
-                      class: "dropdown-item #{'active' if session[:currency] == currency}",
-                      data: { action: "currency#update" } %>
-                <% end %>
-              </li>
-            <% end %>
-          </ul>
-        </div>
-      </li>
-      <% if current_user.present? %>
-        <li class="nav-item">
-          <%= button_to 'Logout', destroy_user_session_path, method: :delete, class: "btn btn-outline-light mr-5" %>
-        </li>
-      <% end %>
-    </ul>
+
+    <!-- Right-side controls -->
+    <div class="d-flex align-items-center ml-4">
+      <!-- Currency Dropdown -->
+      <div class="dropdown me-3" data-controller="currency">
+        <button class="btn btn-link nav-link dropdown-toggle" type="button" id="currencyDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-action="click->currency#toggleDropdown">
+          <i class="fas fa-money-bill-wave"></i>
+          <%= session[:currency] || 'USD' %>
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="currencyDropdown">
+          <% %w[USD GBP CAD EUR AED SGD AUD NZD JPY CHF THB MYR CNY HKD INR].each do |currency| %>
+            <li>
+              <%= form_tag set_currency_path, method: :post, data: { turbo: false } do %>
+                <%= hidden_field_tag :currency, currency %>
+                <%= button_tag currency,
+                    class: "dropdown-item #{'active' if session[:currency] == currency}",
+                    data: { action: "currency#update" } %>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+
+      <!-- User Dropdown -->
+      <div class="dropdown" style="margin-right: 7rem;" data-controller="dropdown">
+        <a
+          class="btn btn-link nav-link dropdown-toggle"
+          href="#"
+          id="userDropdown"
+          role="button"
+          data-action="click->dropdown#toggle"
+          aria-expanded="false">
+          <%= image_tag "logo.png", class: "rounded-circle", alt: "User", width: "32", height: "32" %>
+        </a>
+
+        <ul class="dropdown-menu dropdown-menu-end" data-dropdown-target="menu" aria-labelledby="userDropdown">
+          <li><%= button_to 'Logout', destroy_user_session_path, method: :delete, class: "dropdown-item" %></li>
+          <li><%= link_to 'Profile', edit_user_registration_path, class: "dropdown-item" %></li>
+        </ul>
+      </div>
+    </div>
   </div>
 </nav>
+<style>
+  .dropdown-menu.show {
+    display: block;
+  }
+</style>

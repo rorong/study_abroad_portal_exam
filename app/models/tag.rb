@@ -33,6 +33,7 @@ class Tag < ApplicationRecord
     }
   } do
     mappings dynamic: false do
+      indexes :id, type: 'keyword'
       indexes :tag_name, type: 'keyword'
     end
   end

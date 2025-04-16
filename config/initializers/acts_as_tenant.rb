@@ -4,5 +4,5 @@ ActsAsTenant.configure do |config|
   # Customize the query for loading the tenant in background jobs
   # config.job_scope = ->{ all }
 
-  config.require_tenant = true
+  config.require_tenant = false
 end

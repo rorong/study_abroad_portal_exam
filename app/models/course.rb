@@ -122,7 +122,7 @@ class Course < ApplicationRecord
 
       indexes :tags, type: 'nested' do
         indexes :id, type: 'keyword'
-        indexes :tag_name, analyzer: 'autocomplete'
+        indexes :tag_name, type: 'keywords'
       end
 
       indexes :department, type: 'nested' do
@@ -137,7 +137,52 @@ class Course < ApplicationRecord
 
     end
   end
-
+  
+  def self.prefix_search(query, size: 10)
+    return [] if query.blank?
+  
+    results = __elasticsearch__.search(
+      {
+        size: size,
+        query: {
+          bool: {
+            should: [
+              {
+                match_phrase_prefix: {
+                  name: {
+                    query: query,
+                    max_expansions: 10,
+                    slop: 2
+                  }
+                }
+              },
+              {
+                nested: {
+                  path: "universities",
+                  query: {
+                    match_phrase_prefix: {
+                      "universities.name": {
+                        query: query,
+                        max_expansions: 10,
+                        slop: 2
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        _source: ['id', 'name', 'universities.name']
+      }
+    )
+  
+    results.map do |result|
+      university_name = result._source.dig('universities', 0, 'name') rescue nil
+      [result._source['id'], result._source['name'], university_name]
+    end
+  end
+  
   def self.advanced_search(query, filters = {}, sort=nil, page=1, per_page=15)
     from = (page - 1) * per_page
 
@@ -244,35 +289,8 @@ class Course < ApplicationRecord
           }
         }
       }
-
-      # search_definition[:query][:bool][:filter] << {
-      #   nested: {
-      #     path: 'tags',
-      #     query: {
-      #       bool: {
-      #         must: [
-      #           {
-      #             terms: { 'tags.id': filters[:tag_id] }
-      #           },
-      #           {
-      #             exists: { field: 'tags.tag_name' }
-      #           }
-      #         ],
-      #         must_not: [
-      #           {
-      #             script: {
-      #               script: {
-      #                 source: "doc['tags.tag_name'].value == ''",
-      #                 lang: "painless"
-      #               }
-      #             }
-      #           }
-      #         ]
-      #       }
-      #     }
-      #   }
-      # }
     end
+    
 
     if filters[:intake].present?
       search_definition[:query][:bool][:filter] << {

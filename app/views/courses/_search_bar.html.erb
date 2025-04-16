@@ -18,9 +18,9 @@
               action: "input->search#updateQueryResults"
             } %>
         <button type="button"
-            class="position-absolute top-50 end-0 translate-middle-y text-secondary pe-3 clear-search border-0 bg-transparent"
+            class="position-absolute top-50 end-0 translate-middle-y text-secondary clear-search border-0 bg-transparent"
             data-action="search#clear"
-            style="right: 4rem; z-index: 4;">
+            style="right: 4rem; z-index: 4; margin-right: 15%;">
           <i class="fas fa-times"></i>
         </button>
         <button class="btn btn-primary" type="button" data-action="search#performSearch">
@@ -28,7 +28,7 @@
         </button>
       </div>
       
-      <div data-search-target="queryResults" class="d-none position-absolute w-100 bg-white border rounded-bottom shadow-sm" style="top: 100%; left: 0; z-index: 1050;">
+      <div data-search-target="queryResults" class="d-none position-absolute  bg-white border rounded-bottom shadow-sm" style="top: 100%; left: 0; z-index: 1050;">
         <div data-search-target="resultsContainer" class="search-results-container" style="max-height: 300px; overflow-y: auto;"></div>
       </div>
     <% end %>

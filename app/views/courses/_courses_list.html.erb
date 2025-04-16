@@ -27,7 +27,7 @@
                               end if params[:allow_backlogs].present?
     filters[:lateral_entry_possible] = params[:lateral_entry_possible] == "true" ? "Lateral Entry: Yes" : "Lateral Entry: No" if params[:lateral_entry_possible].present?
     if params[:tag_id].present?
-      filters[:tag_id] = tags.find { |t| t.id.to_s == params[:tag_id] }&.tag_name
+      filters[:tag_id] = @available_tags.find { |t| t.id.to_s == params[:tag_id] }&.tag_name
     end
     
     # Handle tuition fee range
@@ -171,7 +171,20 @@
         <span class="fw-normal">Courses (<span class="text-primary fw-bold"><%= course_count %></span>) available in (<span class="text-primary fw-bold"><%= @university_count %></span>) Institutes</span>
       </div>
     </h5>
-    
+    <% per_page = (params[:per_page] || 15).to_i %>
+    <% current_page = (params[:page] || 1).to_i %>
+    <% total_courses = course_count %>
+    <% start_number = ((current_page - 1) * per_page) + 1 %>
+    <% actual_records_on_page = @courses_by_university.flatten.size %>
+    <% end_number = [start_number + actual_records_on_page - 1, total_courses].min %>
+
+    <% if total_courses > 0 %>
+      <div class="mt-2 text-muted small">
+        Showing <strong><%= start_number %>–<%= end_number %></strong> of <strong><%= total_courses %></strong> courses
+      </div>
+    <% end %>
+
+
     <div class="d-flex align-items-center">
       <div class="d-flex align-items-center me-3">
         <%= form_tag courses_path, method: :get, data: { turbo: true } do %>
@@ -347,12 +360,119 @@
         </div>
       <% end %>
     <% end %>
-  <% else %>
-    <p class="text-muted text-center">No courses found.</p>
+  <% end %>
+  <% @courses_by_university.each do |university, university_courses| %>
+    <% university_courses.each do |course| %>
+      <% if course.university.blank? %>
+        <div class="mb-5">
+          <div class="list-group">
+          <div class="list-group-item border-0 bg-white mb-3 shadow-sm rounded p-4">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+              <h5 class="mb-3 text-primary fw-bold"><%= course.name %></h5>
+              
+              <div class="row mb-4">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <div class="text-muted mb-1">Tuition Fee</div>
+                    <div class="fw-bold" data-currency-target="tuitionFee">
+                      <% if course.tuition_fee_international.present? %>
+                        <%# Disable caching for currency conversion %>
+                        <% cache [course, 'tuition_fee', session[:currency]] do %>
+                          <%= format_currency(convert_currency(course.tuition_fee_international, 'USD', session[:currency])) %>
+                        <% end %>
+                      <% else %>
+                        N/A
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <div class="text-muted mb-1">Application Fee</div>
+                    <div class="fw-bold" data-currency-target="applicationFee">
+                      <% if course.application_fee.present? %>
+                        <%# Disable caching for currency conversion %>
+                        <% cache [course, 'application_fee', session[:currency]] do %>
+                          <%= format_currency(convert_currency(course.application_fee, 'USD', session[:currency])) %>
+                        <% end %>
+                      <% else %>
+                        N/A
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <div class="text-muted mb-1">Duration</div>
+                    <div class="fw-bold"><%= course.course_duration %> months</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <div class="text-muted mb-1">Intake</div>
+                    <div class="fw-bold"><%= course.intake || "N/A" %></div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <div class="text-muted mb-1">Level of Course</div>
+                    <div class="fw-bold"><%= course.level_of_course || "N/A" %></div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <div class="text-muted mb-1">Delivery Method</div>
+                    <div class="fw-bold"><%= course.delivery_method || "N/A" %></div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                <div class="mb-3">
+                  <div class="text-muted mb-1">Department</div>
+                  <div class="fw-bold"><%= course.department&.name || "N/A" %></div>
+                </div>
+              </div>
+
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <div class="text-muted mb-1">Title</div>
+                    <div class="fw-bold"><%= course.title || "N/A" %></div>
+                  </div>
+                </div>
+                
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <div class="text-muted mb-1">Internship Period</div>
+                    <div class="fw-bold"><%= course.internship_period || 0 %> months</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ms-4 d-flex flex-column">
+              <%= link_to course_path(course), class: "btn btn-primary btn-sm mb-2", data: { turbo: false } do %>
+                <i class="fas fa-info-circle me-1"></i>Details
+              <% end %>
+              <% if course.course_weblink.present? %>
+                <a href="<%= course.course_weblink %>" target="_blank" class="btn btn-warning btn-sm">
+                  <i class="fas fa-external-link-alt me-1"></i>Website
+                </a>
+              <% end %>
+            </div>
+          </div>
+        </div>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
   <% end %>
 
   <%# Use the pagination partial %>
-  <%= paginate @courses_by_university, params: { per_page: params[:per_page] } %>
-  <%#= render 'courses/pagination', courses: @courses, query_params: query_params %>
+  <%= render 'courses/pagination', courses: @courses_by_university, query_params: request.query_parameters %>
    
 </div>

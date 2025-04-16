@@ -24,5 +24,5 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   # Add exchange rates route
-  get 'exchange_rates', to: 'application#exchange_rates'
+  get 'exchange_rates', to: 'currencies#exchange_rates'
 end

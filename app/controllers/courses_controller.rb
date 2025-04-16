@@ -149,23 +149,12 @@ class CoursesController < ApplicationController
 
   def search
     query = params[:query].to_s.strip
-    Rails.logger.info "Search query: #{query}"
-    
-    if query.present?
-
-      # Limit search results to improve performance
-      @courses = Course.advanced_search(query).records
-
-      Rails.logger.info "Found #{@courses.size} results"
-    else
-      @courses = []
-    end
-    
+    @courses = Course.prefix_search(query)
     respond_to do |format|
       format.json { render json: { courses: @courses } }
     end
   end
-
+  
   def map
     @universities = University.where.not(latitude: nil, longitude: nil)
     Rails.logger.info "Found #{@universities.count} universities with coordinates"
