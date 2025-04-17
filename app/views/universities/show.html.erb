@@ -128,8 +128,8 @@
               <% if @university.application_fee.present? %>
                 <div class="list-group-item">
                   <strong>Application Fee:</strong> 
-                  <span class="badge bg-warning text-dark">$<%= number_with_delimiter(@university.application_fee) %></span>
-                </div>
+                  <span class="badge bg-warning text-dark"><%= format_currency(@university.application_fee) %></span>
+                </div> 
               <% end %>
             </div>
           </div>
@@ -207,8 +207,7 @@
                           </p>
                           <% if course.tuition_fee_international.present? %>
                             <p class="mb-2">
-                              <i class="fas fa-dollar-sign me-2"></i>
-                              <strong>Tuition (Intl):</strong> $<%= number_with_delimiter(course.tuition_fee_international) %>
+                              <strong>Tuition (Intl):</strong> <%= format_currency(course.tuition_fee_international) %>
                             </p>
                           <% end %>
                         </div>

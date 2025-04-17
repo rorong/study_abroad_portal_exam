@@ -114,15 +114,17 @@ class Course < ApplicationRecord
           indexes :raw, type: 'keyword'
         end
 
-       indexes :address, type: 'text', analyzer: 'autocomplete', search_analyzer: 'standard'
+        indexes :code, analyzer: 'keyword'
+
+        indexes :address, type: 'text', analyzer: 'autocomplete', search_analyzer: 'standard'
        
-       # Add geo_point for location field (latitude and longitude)
-       indexes :location, type: 'geo_point'
+        # Add geo_point for location field (latitude and longitude)
+        indexes :location, type: 'geo_point'
       end
 
       indexes :tags, type: 'nested' do
         indexes :id, type: 'keyword'
-        indexes :tag_name, type: 'keywords'
+        indexes :tag_name, type: 'keyword'
       end
 
       indexes :department, type: 'nested' do
@@ -240,6 +242,10 @@ class Course < ApplicationRecord
           fields: ['name^4', 'title^3', 'course_code^2', 'module_subjects^2', 'universities.name', 'universities.country']
         }
       }
+    else
+      search_definition[:query][:bool][:must] << {
+        match_all: {}
+      }  
     end
 
     # # Filters

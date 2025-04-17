@@ -2,6 +2,7 @@ class UniversitiesController < ApplicationController
   after_action :verify_authorized, except: [:map_search, :show]
 
   def show
+    @current_currency = session[:currency] || 'USD'
     @university = University.find(params[:id])
     @courses = @university.courses.includes(:department, :tags)
                         .page(params[:page])

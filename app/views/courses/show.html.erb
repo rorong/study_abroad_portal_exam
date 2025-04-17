@@ -41,7 +41,6 @@
     border-radius: 0.75rem;
   }
 </style>
-
 <div class="container py-5">
   <div class="mb-4">
     <%= back_button %>
@@ -115,7 +114,6 @@
             <div class="row mb-4">
               <div class="col-md-6">
                 <div class="icon-text mb-3">
-                  <i class="fas fa-dollar-sign text-primary"></i>
                   <div>
                     <h6 class="mb-0">Tuition Fee (International)</h6>
                     <p class="mb-0"><%= format_currency(convert_currency(@course.tuition_fee_international)) %></p>
@@ -125,7 +123,6 @@
               <% if @course.application_fee.present? %>
                 <div class="col-md-6">
                   <div class="icon-text mb-3">
-                    <i class="fas fa-file-invoice-dollar text-primary"></i>
                     <div>
                       <h6 class="mb-0">Application Fee</h6>
                       <p class="mb-0"><%= format_currency(convert_currency(@course.application_fee)) %></p>

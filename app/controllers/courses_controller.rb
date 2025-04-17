@@ -51,7 +51,9 @@ class CoursesController < ApplicationController
 
     # Get total hit count from Elasticsearch
     total_count = search_result.response['hits']['total']['value'].to_i
+    # total_count = search_result.response['aggregations']['course_id_count']['value'].to_i
 
+    
     # Extract the course IDs
     course_buckets = search_result.response['aggregations']['unique_courses']['buckets'] || []
     @all_course_ids = course_buckets.map { |bucket| bucket['key'] }
