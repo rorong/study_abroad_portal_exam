@@ -128,7 +128,7 @@
               <% if @university.application_fee.present? %>
                 <div class="list-group-item">
                   <strong>Application Fee:</strong> 
-                  <span class="badge bg-warning text-dark">$<%= number_with_delimiter(@university.application_fee) %></span>
+                  <span class="badge bg-warning text-dark"><%= format_currency(@university.application_fee) %></span>
                 </div>
               <% end %>
             </div>
@@ -207,8 +207,7 @@
                           </p>
                           <% if course.tuition_fee_international.present? %>
                             <p class="mb-2">
-                              <i class="fas fa-dollar-sign me-2"></i>
-                              <strong>Tuition (Intl):</strong> $<%= number_with_delimiter(course.tuition_fee_international) %>
+                              <strong>Tuition (Intl):</strong><%= format_currency(course.tuition_fee_international) %>
                             </p>
                           <% end %>
                         </div>
@@ -225,7 +224,17 @@
               
               <%# Pagination %>
               <div class="d-flex justify-content-center mt-4">
-                <%= paginate @courses %>
+                <%= paginate @courses,
+                    pagination_class: "pagination pagination-lg",
+                    nav_class: "d-inline-block",
+                    page_class: "page-item",
+                    page_link_class: "page-link",
+                    active_class: "active",
+                    disabled_class: "disabled",
+                    first_title: "First",
+                    last_title: "Last",
+                    previous_title: "Previous",
+                    next_title: "Next" %>
               </div>
             <% else %>
               <div class="text-center py-5">

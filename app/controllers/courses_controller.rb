@@ -130,7 +130,15 @@ class CoursesController < ApplicationController
     @courses_by_university = Kaminari.paginate_array(grouped_courses.to_a, total_count: total_count)
                                      .page(page)
                                      .per(per_page)
-               
+
+    actual_records_on_page = @courses_by_university.sum { |_univ, courses| courses.size }
+    start_number = ((page - 1) * per_page) + 1
+    end_number = [start_number + actual_records_on_page - 1, @course_count].min
+    @pagination_info = {
+      start_number: start_number,
+      end_number: end_number,
+      total_courses: @course_count
+    }
 
     # Set the current currency for the view
     @current_currency = session[:currency] || 'USD'

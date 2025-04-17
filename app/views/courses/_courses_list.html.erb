@@ -171,16 +171,10 @@
         <span class="fw-normal">Courses (<span class="text-primary fw-bold"><%= course_count %></span>) available in (<span class="text-primary fw-bold"><%= @university_count %></span>) Institutes</span>
       </div>
     </h5>
-    <% per_page = (params[:per_page] || 15).to_i %>
-    <% current_page = (params[:page] || 1).to_i %>
-    <% total_courses = course_count %>
-    <% start_number = ((current_page - 1) * per_page) + 1 %>
-    <% actual_records_on_page = @courses_by_university.flatten.size %>
-    <% end_number = [start_number + actual_records_on_page - 1, total_courses].min %>
-
-    <% if total_courses > 0 %>
+    <% if @pagination_info[:total_courses] > 0 %>
       <div class="mt-2 text-muted small">
-        Showing <strong><%= start_number %>–<%= end_number %></strong> of <strong><%= total_courses %></strong> courses
+        Showing <strong><%= @pagination_info[:start_number] %>–<%= @pagination_info[:end_number] %></strong> of
+        <strong><%= @pagination_info[:total_courses] %></strong> courses
       </div>
     <% end %>
 
@@ -473,6 +467,17 @@
   <% end %>
 
   <%# Use the pagination partial %>
-  <%= render 'courses/pagination', courses: @courses_by_university, query_params: request.query_parameters %>
-   
+  <div class="d-flex justify-content-center mt-4">
+    <%= paginate @courses_by_university,
+    pagination_class: "pagination pagination-lg",
+    nav_class: "d-inline-block",
+    page_class: "page-item",
+    page_link_class: "page-link",
+    active_class: "active",
+    disabled_class: "disabled",
+    first_title: "First",
+    last_title: "Last",
+    previous_title: "Previous",
+    next_title: "Next" %>   
+  </div>
 </div>

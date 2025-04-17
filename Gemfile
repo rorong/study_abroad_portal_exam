@@ -85,3 +85,4 @@ gem 'omniauth-rails_csrf_protection', '~> 1.0'
 
 # HTTP client for API requests
 gem 'http', '~> 5.1'
+gem "letter_opener", group: :development
