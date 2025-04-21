@@ -2,6 +2,7 @@
 
 module Users
   class OmniauthCallbacksController < Devise::OmniauthCallbacksController
+    before_action :set_current_agency
     # You should configure your model like this:
     # devise :omniauthable, omniauth_providers: [:twitter]
 
@@ -96,5 +97,29 @@ module Users
     def failure
       redirect_to root_path, alert: "Authentication failed, please try again."
     end
+
+    private
+    
+    def set_current_agency
+      subdomain = request.subdomains.first
+      if subdomain
+        agency = Agency.find_by(subdomain: subdomain)
+        if agency
+          puts "-- Tenant set ------ #{agency.subdomain}"
+          ActsAsTenant.current_tenant = agency
+        else
+          raise ActsAsTenant::Errors::NoTenantSet unless agency
+          # redirect_to root_url(subdomain: nil), alert: "Agency not found"
+        end
+      else
+        raise ActsAsTenant::Errors::NoTenantSet unless agency
+        # redirect_to root_url(subdomain: nil), alert: "No subdomain provided"
+      end
+    end
+
+    def current_agency
+      ActsAsTenant.current_tenant
+    end
+
   end
 end

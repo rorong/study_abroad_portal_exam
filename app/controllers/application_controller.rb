@@ -38,9 +38,11 @@ class ApplicationController < ActionController::Base
         puts "-- Tenant set ------ #{agency.subdomain}"
         ActsAsTenant.current_tenant = agency
       else
-        redirect_to root_url(subdomain: nil), alert: "Agency not found"
+        raise ActsAsTenant::Errors::NoTenantSet unless agency
+        # redirect_to root_url(subdomain: nil), alert: "Agency not found"
       end
     else
+      raise ActsAsTenant::Errors::NoTenantSet unless agency
       # redirect_to root_url(subdomain: nil), alert: "No subdomain provided"
     end
   end
