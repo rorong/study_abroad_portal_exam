@@ -201,7 +201,9 @@
             <%= f.select :tag_id,
               options_for_select(
                 @available_tags.map do |tag|
-                  ["#{tag.tag_name} (#{@available_tags_counts[tag.id] || 0})", tag.id]
+                  tag_name = tag.tag_name || 'NIL-TAG'  # Handle nil tag_name
+                  count = @available_tags_counts[tag.id.to_s] || 0  # Use 0 if no count is found for the tag
+                  ["#{tag_name} (#{count})", tag.id]
                 end,
                 selected: params[:tag_id]
               ),
@@ -209,6 +211,7 @@
               class: "form-select",
               data: { action: "change->search#search" }
             %>
+
           </div>
           <div class="col-12">
           <%= f.label :min_tuition_fee, "Tuition Fee", class: "form-label" %>

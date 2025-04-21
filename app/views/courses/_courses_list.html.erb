@@ -228,25 +228,25 @@
     </div>
   </div>
   <% if @courses_by_university.any? %>
-    <% @courses_by_university.each do |university, university_courses| %>
-      <% if university.present? %>
+    <% @courses_by_university.each do |grouped_university| %>
+      <% if grouped_university[:university].present? %>
         <div class="mb-5">
           <div class="bg-light p-3 rounded mb-3 d-flex align-items-center">
             <div>
               <h4 class="mb-0">
-                <%= link_to university.name, university_path(university), class: "text-decoration-none text-dark", data: { turbo: false } %>
+                <%= link_to grouped_university[:university].name, university_path(grouped_university[:university]), class: "text-decoration-none text-dark", data: { turbo: false } %>
               </h4>
-              <% if university.country.present? %>
+              <% if grouped_university[:university].country.present? %>
                 <div class="text-muted">
                   <i class="fas fa-globe-americas me-1"></i>
-                  <%= university.country %>
+                  <%= grouped_university[:university].country %>
                 </div>
               <% end %>
             </div>
           </div>
 
           <div class="list-group">
-            <% university_courses.each do |course| %>
+            <% grouped_university[:courses].each do |course| %>
               <% cache course do %>
                 <div class="list-group-item border-0 bg-white mb-3 shadow-sm rounded p-4">
                   <div class="d-flex justify-content-between align-items-start">
@@ -355,8 +355,8 @@
       <% end %>
     <% end %>
   <% end %>
-  <% @courses_by_university.each do |university, university_courses| %>
-    <% university_courses.each do |course| %>
+  <% @courses_by_university.each do |grouped_university| %>
+    <% grouped_university[:courses].each do |course| %>
       <% if course.university.blank? %>
         <div class="mb-5">
           <div class="list-group">

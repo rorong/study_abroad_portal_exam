@@ -33,6 +33,7 @@ class Department < ApplicationRecord
       }
     } do
       mappings dynamic: false do
+        indexes :id, type: 'keyword'
         indexes :name, analyzer: 'autocomplete'
       end
     end

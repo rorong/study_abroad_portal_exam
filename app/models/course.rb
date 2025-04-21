@@ -122,7 +122,7 @@ class Course < ApplicationRecord
 
       indexes :tags, type: 'nested' do
         indexes :id, type: 'keyword'
-        indexes :tag_name, type: 'keywords'
+        indexes :tag_name, type: 'keyword'
       end
 
       indexes :department, type: 'nested' do
@@ -189,6 +189,7 @@ class Course < ApplicationRecord
     search_definition = {
       from: from,
       size: per_page,
+      track_total_hits: true,  # 👈 This ensures it calculates the full total
       query: {
         bool: {
           must: [],
@@ -196,6 +197,32 @@ class Course < ApplicationRecord
         }
       },
       aggs: {
+        course_requirement: {
+          nested: {
+            path: "course_requirement"
+          },
+          aggs: {
+            lateral_entry_possible: {
+              terms: {
+                field: "course_requirement.lateral_entry_possible",
+                size: 2
+              }
+            }
+          }
+        },
+        tags: {
+          nested: {
+            path: "tags"
+          },
+          aggs: {
+            by_tag: {
+              terms: {
+                field: "tags.id",  # Field for the tag id
+                size: 10000  # Adjust the size if you expect a larger number of tags
+              }
+            }
+          }
+        },
         unique_courses: {
           terms: {
             field: "id",
@@ -210,7 +237,22 @@ class Course < ApplicationRecord
             ids: {
               terms: {
                 field: "universities.id",
-                size: 10000
+                size: 10000,
+                shard_size: 50000  # a bit higher than size, to be safe
+              }
+            },
+            by_country: {
+              terms: {
+                field: "universities.country.raw", # assuming keyword mapping
+                size: 10000,
+                shard_size: 50000  # a bit higher than size, to be safe
+              }
+            },
+            by_type_of_university: {
+              terms: {
+                field: "universities.type_of_university", # assuming keyword mapping
+                size: 10000,
+                shard_size: 50000  # a bit higher than size, to be safe
               }
             }
           }
@@ -223,9 +265,45 @@ class Course < ApplicationRecord
             ids: {
               terms: {
                 field: "department.id",
-                size: 10000
+                size: 10000,
+                shard_size: 50000  # a bit higher than size, to be safe
               }
             }
+          }
+        },
+        by_intake: {
+          terms: {
+            field: "intake",
+            size: 10000,
+            shard_size: 50000  # a bit higher than size, to be safe
+          }
+        },
+        by_current_status: {
+          terms: {
+            field: "current_status",
+            size: 10000,
+            shard_size: 50000  # a bit higher than size, to be safe
+          }
+        },
+        by_delivery_method: {
+          terms: {
+            field: "delivery_method",
+            size: 10000,
+            shard_size: 50000  # a bit higher than size, to be safe
+          }
+        },
+        by_level_of_course: {
+          terms: {
+            field: "level_of_course",
+            size: 10000,
+            shard_size: 50000  # a bit higher than size, to be safe
+          }
+        },
+        by_allow_backlogs: {
+          terms: {
+            field: "allow_backlogs",
+            size: 10000,
+            shard_size: 50000  # a bit higher than size, to be safe
           }
         }
       }

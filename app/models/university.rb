@@ -49,7 +49,6 @@ class University < ApplicationRecord
     } do
       mappings dynamic: false do
         indexes :name, analyzer: 'autocomplete'
-        indexes :code, analyzer: 'autocomplete'
 
         # Fields for exact matching (should use keyword)
         indexes :city, type: 'keyword'
@@ -61,6 +60,7 @@ class University < ApplicationRecord
         indexes :type_of_university, type: 'keyword'
         indexes :record_id, type: 'keyword'
         indexes :id, type: 'keyword'
+        indexes :code, type: 'keyword'
 
         # Text fields for full-text search (without autocomplete)
         indexes :address, type: 'text', analyzer: 'autocomplete', search_analyzer: 'standard'

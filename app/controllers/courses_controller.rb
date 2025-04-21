@@ -4,6 +4,7 @@ class CoursesController < ApplicationController
   end
 
   def index
+    return redirect_to root_url if params[:query].blank?
     # create filter hash and pass in below function
      # {"lateral_entry_possible": false}
      # {"min_tuition_fee": "10", "max_tuition_fee": "10"}
@@ -51,12 +52,6 @@ class CoursesController < ApplicationController
 
     # Get total hit count from Elasticsearch
     total_count = search_result.response['hits']['total']['value'].to_i
-
-    # Extract the course IDs
-    course_buckets = search_result.response['aggregations']['unique_courses']['buckets'] || []
-    @all_course_ids = course_buckets.map { |bucket| bucket['key'] }
-    # all_course_count = all_course_ids.size
-    @filtered_courses_query = Course.where(id: @all_course_ids)
     
     # Convert Elasticsearch hits to ActiveRecord models
     @search_courses = search_result.records
@@ -82,62 +77,103 @@ class CoursesController < ApplicationController
     @course_count = total_count
     
     university_buckets = search_result.response['aggregations']['unique_universities']['ids']['buckets']
-    @all_university_ids = university_buckets.map { |bucket| bucket['key'] }
+    @university_course_counts = university_buckets.each_with_object({}) do |bucket, hash|
+      hash[bucket['key'].to_i] = bucket['doc_count']
+    end
+    @all_university_ids = @university_course_counts.keys
     @university_count = @all_university_ids.size
     @available_universities = University.where(id: @all_university_ids)
+   
 
-    @available_university_countries = @available_universities.pluck(:country).compact.uniq
-    @university_course_counts = @filtered_courses_query.joins(:universities).group('universities.id').count
-    @university_country_counts = @filtered_courses_query.joins(:universities).group('universities.country').count
+    @university_country_counts = (search_result.response['aggregations']['unique_universities']['by_country']['buckets'] || []).each_with_object({}) do |bucket, hash|
+      hash[bucket['key']] = bucket['doc_count']
+    end
+    @available_university_countries = @university_country_counts.keys
 
 
-    @available_university_types = @available_universities.pluck(:type_of_university).compact.uniq
-    @available_university_types_counts = @filtered_courses_query.joins(:universities).group('universities.type_of_university').count
+    @available_university_types_counts = (search_result.response['aggregations']['unique_universities']['by_type_of_university']['buckets'] || []).each_with_object({}) do |bucket, hash|
+      hash[bucket['key']] = bucket['doc_count']
+    end
+    @available_university_types = @available_university_types_counts.keys
+
 
     # Prepare dynamic filter options based on current filtered results
     department_buckets = search_result.response['aggregations']['unique_departments']['ids']['buckets']
-    all_department_ids = department_buckets.map { |bucket| bucket['key'] }
+    @available_departments_counts = department_buckets.each_with_object({}) do |bucket, hash|
+      hash[bucket['key'].to_i] = bucket['doc_count']
+    end
+    all_department_ids = @available_departments_counts.keys
     @available_departments = Department.where(id: all_department_ids)
+   
 
-    @available_departments_counts = @filtered_courses_query.joins(:department).group('departments.id').count
-
-    @available_intakes = @filtered_courses_query.pluck(:intake).compact.uniq
-    @available_intakes_counts = @filtered_courses_query.group('intake').count
-
-    @available_statuses = @filtered_courses_query.pluck(:current_status).compact.uniq
-    @available_statuses_counts = @filtered_courses_query.group('current_status').count
-
-    @available_delivery_methods = @filtered_courses_query.pluck(:delivery_method).compact.uniq
-    @available_delivery_methods_counts = @filtered_courses_query.group('delivery_method').count
-
-    @available_levels = @filtered_courses_query.pluck(:level_of_course).compact.uniq
-    @available_levels_counts = @filtered_courses_query.group('level_of_course').count
-
-    @available_backlogs = @filtered_courses_query.pluck(:allow_backlogs).compact.uniq
-    @available_backlogs_counts = @filtered_courses_query.group('allow_backlogs').count
+    intake_buckets = search_result.response['aggregations']['by_intake']['buckets'] || []
+    @available_intakes = intake_buckets.map { |bucket| bucket['key'] }
+    @available_intakes_counts = intake_buckets.each_with_object({}) do |bucket, hash|
+      hash[bucket['key']] = bucket['doc_count']
+    end
 
 
-    @available_lateral_entries = @filtered_courses_query.joins(:course_requirement).distinct.pluck('course_requirements.lateral_entry_possible').compact.uniq
-    @available_lateral_entries_counts = @filtered_courses_query.joins(:course_requirement).group('course_requirements.lateral_entry_possible').count
+    available_status_buckets = search_result.response['aggregations']['by_current_status']['buckets'] || []
+    @available_statuses = available_status_buckets.map { |bucket| bucket['key'] }
+    @available_statuses_counts = available_status_buckets.each_with_object({}) do |bucket, hash|
+      hash[bucket['key']] = bucket['doc_count']
+    end
 
-    @available_tags = @filtered_courses_query.joins(:tags).where.not(tags: { tag_name: nil }).select('tags.id, tags.tag_name').distinct
-    @available_tags_counts = @filtered_courses_query.joins(:tags).group('tags.id').count
+    delivery_method_buckets = search_result.response['aggregations']['by_delivery_method']['buckets'] || []
+    @available_delivery_methods = delivery_method_buckets.map { |bucket| bucket['key'] }
+    @available_delivery_methods_counts = delivery_method_buckets.each_with_object({}) do |bucket, hash|
+      hash[bucket['key']] = bucket['doc_count']
+    end
+
+    available_levels_buckets = search_result.response['aggregations']['by_level_of_course']['buckets'] || []
+    @available_levels = available_levels_buckets.map { |bucket| bucket['key'] }
+    @available_levels_counts = available_levels_buckets.each_with_object({}) do |bucket, hash|
+      hash[bucket['key']] = bucket['doc_count']
+    end
+
+    allow_backlogs_buckets = search_result.response['aggregations']['by_allow_backlogs']['buckets'] || []
+    @available_backlogs = allow_backlogs_buckets.map { |bucket| bucket['key'] }
+    @available_backlogs_counts = allow_backlogs_buckets.each_with_object({}) do |bucket, hash|
+      hash[bucket['key']] = bucket['doc_count']
+    end
+
+
+    lateral_entry_buckets = search_result.response.dig('aggregations', 'course_requirement', 'lateral_entry_possible', 'buckets') || []
+    @available_lateral_entries = lateral_entry_buckets.map { |b| b['key'] }
+    @available_lateral_entries_counts = lateral_entry_buckets.to_h do |b|
+      [b['key'], b['doc_count']]
+    end
+
+
+    tag_buckets = search_result.response['aggregations']['tags']['by_tag']['buckets'] || []
+    @available_tags_counts = tag_buckets.to_h do |bucket|
+      [bucket['key'], bucket['doc_count']]
+    end
+    tag_ids = @available_tags_counts.keys
+    @available_tags = Tag.select(:id, :tag_name).where(id: tag_ids)
+
 
     # Group the courses by university
     grouped_courses = @search_courses.includes(:university, :department).group_by(&:university)
 
+    # The structure will be [{ university: university_1, courses: [course_1, course_2, ...] }]
+    grouped_courses_array = grouped_courses.map do |university, courses|
+      { university: university, courses: courses }
+    end
+
     # Paginate the array using Kaminari
-    @courses_by_university = Kaminari.paginate_array(grouped_courses.to_a, total_count: total_count)
+    @courses_by_university = Kaminari.paginate_array(grouped_courses_array, total_count: total_count)
                                      .page(page)
                                      .per(per_page)
 
-    actual_records_on_page = @courses_by_university.sum { |_univ, courses| courses.size }
+                                     
+    actual_records_on_page = @courses_by_university.size
     start_number = ((page - 1) * per_page) + 1
-    end_number = [start_number + actual_records_on_page - 1, @course_count].min
+    end_number = [start_number + actual_records_on_page - 1, total_count].min
     @pagination_info = {
       start_number: start_number,
       end_number: end_number,
-      total_courses: @course_count
+      total_courses: total_count
     }
 
     # Set the current currency for the view
