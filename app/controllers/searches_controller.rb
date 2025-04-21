@@ -1,6 +1,6 @@
 class SearchesController < ApplicationController
 #   skip_before_action :authenticate, only: [:index]
-allow_unauthenticated_access only: %i[ index]
+# allow_unauthenticated_access only: %i[ index]
 
   def index
     @query = params[:query]

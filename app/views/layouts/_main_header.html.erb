@@ -18,6 +18,13 @@
             class: "nav-link #{controller_name == 'universities' && action_name == 'map_search' ? 'active' : ''}",
             data: { turbo: false } %>
       </li>
+      <% if current_user.agency? %>
+        <li class="nav-item">
+          <%= link_to 'Admin', rails_admin_path,
+              class: "nav-link #{request.fullpath.starts_with?('/admin') ? 'active' : ''}",
+              data: { turbo: false } %>
+        </li>
+      <% end %>
     </ul>
 
     <!-- Right-side controls -->
