@@ -47,6 +47,53 @@
   </script>
 <% end %>
 
+<% if @search_courses.present? %>
+  <div class="mt-5">
+    <h3 class="mb-4 text-primary fw-bold border-bottom pb-2">🎓 Similar Courses You Might Like</h3>
+
+    <div id="similarCoursesCarousel" class="carousel slide mx-5 position-relative" data-bs-ride="carousel" style="margin-left: 100px; margin-right: 100px;">
+      <div class="carousel-inner">
+        <% @search_courses.first(20).each_slice(4).with_index do |course_group, index| %>
+          <div class="carousel-item <%= 'active' if index == 0 %>">
+            <div class="row g-3">
+              <% course_group.each do |course| %>
+                <div class="col-md-3">
+                  <div class="card h-100 shadow-sm border-0 rounded-4">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                      <div>
+                        <h6 class="card-title fw-semibold mb-2" style="min-height: 45px;"><%= truncate(course.name, length: 50) %></h6>
+                        <% if course.universities.any? %>
+                          <p class="text-muted mb-1 small">
+                            <i class="bi bi-building"></i> <%= course.universities.first.name %>
+                          </p>
+                          <% if course.universities.first.country %>
+                            <span class="badge bg-secondary"><%= course.universities.first.country %></span>
+                          <% end %>
+                        <% end %>
+                      </div>
+                      <%= link_to 'View Details', course_path(course), class: "btn btn-sm btn-outline-primary mt-3" %>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Carousel controls -->
+      <button class="carousel-control-prev custom-control" type="button" data-bs-target="#similarCoursesCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+      </button>
+      <button class="carousel-control-next custom-control" type="button" data-bs-target="#similarCoursesCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
+    </div>
+  </div>
+<% end %>
+
 <style>
   [data-search-target="queryResults"] {
     position: absolute;
@@ -73,6 +120,66 @@
   }
   .clear-search:hover {
     opacity: 1;
+  }
+  .card-title {
+    font-size: 0.95rem;
+  }
+
+  .carousel-control-prev-icon,
+  .carousel-control-next-icon {
+    background-size: 100% 100%;
+    opacity: 0.8;
+  }
+
+  .carousel-control-prev-icon:hover,
+  .carousel-control-next-icon:hover {
+    opacity: 1;
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    transition: transform 0.2s ease-in-out;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+  #similarCoursesCarousel .carousel-control-prev,
+  #similarCoursesCarousel .carousel-control-next {
+    width: auto;
+    top: 35%;
+    transform: translateY(-50%);
+    z-index: 2;
+  }
+
+  #similarCoursesCarousel .carousel-control-prev {
+    left: -60px; /* Close to left edge inside the margin */
+  }
+
+  #similarCoursesCarousel .carousel-control-next {
+    right: -60px; /* Close to right edge inside the margin */
+  }
+
+  #similarCoursesCarousel {
+    margin-left: 100px;
+    margin-right: 100px;
+  }
+  /* Previous Button - margin-left */
+  .carousel-control-prev.custom-control {
+    margin-left: 25px;
+    left: -60px; /* Keeps it inside the carousel but near the edge */
+  }
+
+  /* Next Button - margin-right */
+  .carousel-control-next.custom-control {
+    margin-right: 25px;
+    right: -60px; /* Keeps it inside the carousel but near the edge */
+  }
+
+  /* General button styles */
+  #similarCoursesCarousel .carousel-control-prev,
+  #similarCoursesCarousel .carousel-control-next {
+    width: auto;
+    top: 35%;
+    transform: translateY(-50%);
+    z-index: 2;
   }
 </style>
 

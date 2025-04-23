@@ -65,21 +65,105 @@ class Course < ApplicationRecord
       filter: {
         autocomplete_filter: {
           type:     'edge_ngram',
-          min_gram: 1,
+          min_gram: 2,
           max_gram: 20
+        },
+        synonym_filter: {
+          type: 'synonym',
+          synonyms: [
+            # 🎓 Business & MBA
+            "mba => business, business management, business/management, business analytics, marketing, accounting, finance, human resources, master of business administration",
+            "business => mba, business management, business/management, business analytics, marketing, accounting, finance, human resources, master of business administration, entrepreneurship",
+            "management => mba, business management, human resources, business/management",
+            "business/management => mba, management, business, business analytics, marketing, accounting, finance, hr, human resources",
+            "business management => business, business/management, mba, entrepreneurship, marketing, hr",
+            "business analytics => business, mba, analytics, data analytics, data science",
+            "finance => accounting, business, business management, economics, mba, financial studies",
+            "accounting => finance, business, mba",
+            "human resources => hr, mba, business management, business/management",
+            "marketing => business, mba, digital marketing, business analytics, business/management",
+
+            # 🛠️ Engineering
+            "engineering => chemical engineering, civil engineering, mechanical engineering, electrical and electronics engineering, aerospace engineering, computer science, software engineering, information technology, material sciences, metallurgy, robotics, mechatronics, environmental engineering",
+            "mechanical engineering => mechatronics, robotics, mechanical and mechatronics engineering",
+            "electrical and electronics engineering => eee, electronics, electrical engineering",
+            "computer science => software engineering, cs, it, information technology, programming, ai, artificial intelligence",
+            "information technology => computer science, it, software engineering, cs, cloud computing",
+            "aerospace engineering => aviation, mechanical engineering, space science, engineering",
+            "civil engineering => architecture, construction, urban planning, architect",
+            "architecture => civil engineering, architect, built environment",
+            "chemical engineering => chemistry, process engineering, industrial chemistry",
+            "material sciences => metallurgy, physics, nanotech, chemistry",
+            "mechatronics => mechanical engineering, robotics, automation, engineering",
+            "software engineering => computer science, programming, it",
+
+            # 🔬 Science
+            "science => biology, chemistry, physics, mathematics, statistics, environmental science, health sciences, life sciences, medicine, pharmacy, science and technology",
+            "life sciences => biology, health sciences, medicine and veterinary sciences",
+            "health sciences => nursing, physiotherapy, life sciences, medicine, pharmacy, healthcare",
+            "medicine => health sciences, medicine and veterinary sciences, pharmacy",
+            "pharmacy => medicine, chemistry, biology, health sciences",
+            "physics => physics and astronomical sciences, astronomy, astrophysics",
+            "mathematics => mathematics and statistics, stats, data science, analytics",
+            "statistics => mathematics, data science, analytics",
+            "biology => biological sciences, life sciences, health sciences, biochemistry, medicine",
+            "environment and sustainability => environmental science, ecology, sustainability studies",
+            "chemistry => chemical sciences, medicine and veterinary sciences, biology",
+
+            # 👨‍🎓 Humanities & Social Sciences
+            "humanities => humanities and social sciences, social sciences, literature, language, history, archeology, culture",
+            "social sciences => sociology, political science, psychology, criminology, humanities, economics",
+            "psychology => behavioral sciences, mental health, neuroscience, social sciences",
+            "law => legal studies, business law, corporate law, international law",
+            "education => teaching, pedagogy, learning sciences",
+            "economics => finance, business, accounting, econometrics",
+            "history => culture, humanities, literature, language",
+            "language => literature, linguistics, translation, philology",
+            "literature language and culture => language, literature, culture, humanities",
+
+            # 🎨 Creative Arts & Media
+            "art and design => fine arts, design, creative arts, graphic design, visual arts, fashion, textiles",
+            "music => performance arts, performing arts, audio production",
+            "dance => performance arts, performing arts, choreography",
+            "film making => journalism and media studies, performance arts, visual media, film making and photography, media studies",
+            "journalism and media studies => film making, media, communication",
+            "performance arts => film making, music, dance, theatre",
+            "journalism and media studies => media, journalism, film making, communication, mass media",
+            "photography => film making and photography, visual media",
+
+            # 🧑‍🍳 Other Specialized
+            "culinary => food sciences, hospitality and tourism, cooking, gastronomy",
+            "hospitality and tourism => tourism, hotel management, event management, culinary",
+            "sports sciences => physiotherapy, sports, health sciences, fitness",
+            "physiotherapy => health sciences, rehabilitation, sports sciences",
+            "zoology => biology, life sciences, environmental science",
+            "agriculture => food sciences, environmental science, botany",
+            "archeology => history, humanities, culture",
+            "textiles => fashion, art and design, fabric design"
+          ]
         }
       },
       analyzer: {
         autocomplete: {
           type:      'custom',
           tokenizer: 'standard',
-          filter:    ['lowercase', 'autocomplete_filter']
+          filter:    ['lowercase', 'synonym_filter', 'autocomplete_filter']
+        },
+        autocomplete_search: {
+          type: 'custom',
+          tokenizer: 'standard',
+          filter: ['lowercase', 'synonym_filter']
+        },
+        synonym_analyzer: {
+          type: 'custom',
+          tokenizer: 'standard',
+          filter: ['lowercase', 'synonym_filter']
         }
       }
     }
   } do
     mappings dynamic: false do
-      indexes :name, analyzer: 'autocomplete'
+      indexes :name, type: 'text', analyzer: 'autocomplete', search_analyzer: 'autocomplete_search'
       indexes :title, analyzer: 'autocomplete'
 
       # Fields for exact matching (should use keyword)
@@ -111,7 +195,7 @@ class Course < ApplicationRecord
         indexes :name, analyzer: 'autocomplete'
         indexes :type_of_university, type: 'keyword'
         indexes :country, type: 'text' do
-          indexes :raw, type: 'keyword'
+        indexes :raw, type: 'keyword'
         end
 
        indexes :address, type: 'text', analyzer: 'autocomplete', search_analyzer: 'standard'
@@ -127,7 +211,13 @@ class Course < ApplicationRecord
 
       indexes :department, type: 'nested' do
         indexes :id, type: 'keyword'
-        indexes :name, analyzer: 'autocomplete'
+        indexes :name, type: 'text', analyzer: 'synonym_analyzer', search_analyzer: 'synonym_analyzer', fields: {
+          autocomplete: {
+            type: 'text',
+            analyzer: 'autocomplete',
+            search_analyzer: 'autocomplete_search'
+          }
+        }
       end
 
       indexes :course_requirement, type: 'nested' do
@@ -137,51 +227,107 @@ class Course < ApplicationRecord
 
     end
   end
-  
+
   def self.prefix_search(query, size: 10)
     return [] if query.blank?
-  
+
     results = __elasticsearch__.search(
       {
         size: size,
         query: {
           bool: {
             should: [
+              # Exact match on name
+              {
+                match: {
+                  name: {
+                    query: query,
+                    boost: 2
+                  }
+                }
+              },
+
+              # Fuzzy match to tolerate typos
+              {
+                match: {
+                  name: {
+                    query: query,
+                    fuzziness: "AUTO",
+                    prefix_length: 2,
+                    boost: 1.5
+                  }
+                }
+              },
+
+              # Fuzzy synonym match
+              {
+                match: {
+                  "name.synonym": {
+                    query: query,
+                    fuzziness: "AUTO",
+                    prefix_length: 2,
+                    boost: 1.3
+                  }
+                }
+              },
+
+              # Autocomplete typing
               {
                 match_phrase_prefix: {
                   name: {
                     query: query,
                     max_expansions: 10,
-                    slop: 2
+                    slop: 1
                   }
                 }
               },
+
+              # Nested fuzzy match for department synonyms
               {
                 nested: {
-                  path: "universities",
+                  path: "department",
+                  query: {
+                    match: {
+                      "department.name.synonym": {
+                        query: query,
+                        fuzziness: "AUTO",
+                        prefix_length: 2,
+                        boost: 1.2
+                      }
+                    }
+                  }
+                }
+              },
+
+              # Autocomplete on department names
+              {
+                nested: {
+                  path: "department",
                   query: {
                     match_phrase_prefix: {
-                      "universities.name": {
+                      "department.name.autocomplete": {
                         query: query,
                         max_expansions: 10,
-                        slop: 2
+                        slop: 1
                       }
                     }
                   }
                 }
               }
-            ]
+            ],
+            minimum_should_match: 1
           }
         },
         _source: ['id', 'name', 'universities.name']
       }
     )
-  
+
     results.map do |result|
-      university_name = result._source.dig('universities', 0, 'name') rescue nil
+      university_name = result._source['universities']&.first&.dig('name') rescue nil
       [result._source['id'], result._source['name'], university_name]
     end
   end
+
   
   def self.advanced_search(query, filters = {}, sort=nil, page=1, per_page=15)
     from = (page - 1) * per_page
@@ -312,10 +458,39 @@ class Course < ApplicationRecord
 
     # Full-text search
     if query.present?
+      # search_definition[:query][:bool][:must] << {
+      #   multi_match: {
+      #     query: query,
+      #     # fields: ['name^5', 'title^4', 'module_subjects^2', 'universities.name'],
+      #     fields: ['name^3', 'department.name^2'],
+      #     fuzziness: 'AUTO'
+      #   }
+      # }
+      # fuzzy = query.length > 3 ? 'AUTO' : 0
       search_definition[:query][:bool][:must] << {
-        multi_match: {
-          query: query,
-          fields: ['name^4', 'title^3', 'course_code^2', 'module_subjects^2', 'universities.name', 'universities.country']
+        match: {
+          name: {
+            query: query,
+            operator: "and",
+            fuzziness: "AUTO",
+            boost: 3
+          }
+        }
+      }
+
+      search_definition[:query][:bool][:must] << {
+        nested: {
+          path: "department",
+          query: {
+            match: {
+              "department.name": {
+                query: query,
+                operator: "and",
+                fuzziness: "AUTO",
+                boost: 2
+              }
+            }
+          }
         }
       }
     end
@@ -555,7 +730,7 @@ class Course < ApplicationRecord
         search_definition[:sort] = [{ course_duration: { order: 'desc', missing: '_last' } }]
     end
 
-      __elasticsearch__.search(search_definition)
+      __elasticsearch__.search(search_definition.merge(explain: true))
     end
 
 end
