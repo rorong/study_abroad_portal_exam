@@ -48,12 +48,12 @@
 <% end %>
 
 <% if @search_courses.present? %>
-  <div class="mt-5">
-    <h3 class="mb-4 text-primary fw-bold border-bottom pb-2">🎓 Similar Courses You Might Like</h3>
+  <div class="mt-5 mb-45">
+    <h3 class="mb-4 text-primary fw-bold border-bottom pb-2 ml-45">🎓 Similar Courses You Might Like</h3>
 
     <div id="similarCoursesCarousel" class="carousel slide mx-5 position-relative" data-bs-ride="carousel" style="margin-left: 100px; margin-right: 100px;">
       <div class="carousel-inner">
-        <% @search_courses.first(20).each_slice(4).with_index do |course_group, index| %>
+        <% @search_courses.each_slice(4).with_index do |course_group, index| %>
           <div class="carousel-item <%= 'active' if index == 0 %>">
             <div class="row g-3">
               <% course_group.each do |course| %>
@@ -180,6 +180,12 @@
     top: 35%;
     transform: translateY(-50%);
     z-index: 2;
+  }
+  .mb-45 {
+    margin-bottom: 45px;
+  }
+  .ml-45 {
+    margin-left: 45px;
   }
 </style>
 
