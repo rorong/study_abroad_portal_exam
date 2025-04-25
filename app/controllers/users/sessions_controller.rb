@@ -28,20 +28,22 @@ class Users::SessionsController < Devise::SessionsController
 
   private
     def set_current_agency
-      subdomain = request.subdomains.first
-      if subdomain
-        agency = Agency.find_by(subdomain: subdomain)
-        if agency
-          puts "-- Tenant set ------ #{agency.subdomain}"
-          ActsAsTenant.current_tenant = agency
-        else
-          raise ActsAsTenant::Errors::NoTenantSet unless agency
-          # redirect_to root_url(subdomain: nil), alert: "Agency not found"
-        end
-      else
-        raise ActsAsTenant::Errors::NoTenantSet unless agency
-        # redirect_to root_url(subdomain: nil), alert: "No subdomain provided"
-      end
+      agency = Agency.first
+      ActsAsTenant.current_tenant = agency
+      # subdomain = request.subdomains.first
+      # if subdomain
+      #   agency = Agency.find_by(subdomain: subdomain)
+      #   if agency
+      #     puts "-- Tenant set ------ #{agency.subdomain}"
+      #     ActsAsTenant.current_tenant = agency
+      #   else
+      #     raise ActsAsTenant::Errors::NoTenantSet unless agency
+      #     # redirect_to root_url(subdomain: nil), alert: "Agency not found"
+      #   end
+      # else
+      #   raise ActsAsTenant::Errors::NoTenantSet unless agency
+      #   # redirect_to root_url(subdomain: nil), alert: "No subdomain provided"
+      # end
     end
 
     def current_agency

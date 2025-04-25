@@ -20,6 +20,7 @@
           <% end %>
           
           <!-- All filter fields moved to sidebar -->
+          <% if false %>
           <div class="col-12">
             <%= f.label :department_id, "Department", class: "form-label" %>
             <%= f.select :department_id, 
@@ -35,6 +36,7 @@
             %>
 
           </div>
+          <% end %>
           <div class="col-12">
             <%= f.label :university_id, "University", class: "form-label" %>
             <%= f.select :university_id, 
