@@ -49,13 +49,12 @@ class CoursesController < ApplicationController
     
     # Run Elasticsearch advanced search
     search_result = Course.advanced_search(query, filter, sort, page, per_page)
-
     # Get total hit count from Elasticsearch
     total_count = search_result.response['hits']['total']['value'].to_i
     
     # Convert Elasticsearch hits to ActiveRecord models
     @search_courses = search_result.records
-
+    @similar_courses = Course.advanced_search(query, filter, sort, page, 200).records.order("RANDOM()")
     # # Paginate manually since we're using array-like records from ES
     # @courses = Kaminari.paginate_array(search_result.records.to_a, total_count: total_count)
     #                .page(page).per(per_page)
@@ -152,7 +151,28 @@ class CoursesController < ApplicationController
     tag_ids = @available_tags_counts.keys
     @available_tags = Tag.select(:id, :tag_name).where(id: tag_ids)
 
+    @min_application_fee = search_result.response.dig('aggregations', 'min_application_fee', 'value')
+    @max_application_fee = search_result.response.dig('aggregations', 'max_application_fee', 'value')
 
+    @min_tution_fee = search_result.response.dig('aggregations', 'min_tution_fee', 'value')
+    @max_tution_fee = search_result.response.dig('aggregations', 'max_tution_fee', 'value')
+
+    @min_duration = search_result.response.dig('aggregations', 'min_duration', 'value')
+    @max_duration  = search_result.response.dig('aggregations', 'max_duration', 'value')
+
+    @min_internship = search_result.response.dig('aggregations', 'min_internship', 'value')
+    @max_internship  = search_result.response.dig('aggregations', 'max_internship', 'value')
+
+    @min_world_ranking = search_result.response.dig('aggregations', 'unique_universities', 'min_world_ranking', 'value')
+    @max_world_ranking = search_result.response.dig('aggregations', 'unique_universities', 'max_world_ranking', 'value')
+
+    @min_national_ranking = search_result.response.dig('aggregations', 'unique_universities', 'min_national_ranking', 'value')
+    @max_national_ranking = search_result.response.dig('aggregations', 'unique_universities', 'max_national_ranking', 'value')
+
+    @min_qs_ranking = search_result.response.dig('aggregations', 'unique_universities', 'min_qs_ranking', 'value')
+    @max_qs_ranking = search_result.response.dig('aggregations', 'unique_universities', 'max_qs_ranking', 'value')
+
+    
     # Group the courses by university
     grouped_courses = @search_courses.includes(:university, :department).group_by(&:university)
 
@@ -193,7 +213,15 @@ class CoursesController < ApplicationController
 
   def search
     query = params[:query].to_s.strip
-    @courses = Course.prefix_search(query)
+    # @courses = Course.prefix_search(query)
+    @courses = Course.advanced_search(query).records
+    @courses = @courses.map do |course|
+      [
+        course.id, 
+        course.name, 
+        course.university.name  # Access the university's name
+      ]
+    end
     respond_to do |format|
       format.json { render json: { courses: @courses } }
     end

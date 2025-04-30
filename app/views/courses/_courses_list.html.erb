@@ -163,14 +163,6 @@
   <% end %>
 
   <div class="mb-3 d-flex justify-content-between align-items-center">
-    <h5 class="text-dark mb-0">
-      <% if params[:query].present? %>
-        Showing matches for "<span class="text-primary fw-bold"><%= params[:query] %></span>":<br>
-      <% end %>
-      <div class="mt-1">
-        <span class="fw-normal">Courses (<span class="text-primary fw-bold"><%= course_count %></span>) available in (<span class="text-primary fw-bold"><%= @university_count %></span>) Institutes</span>
-      </div>
-    </h5>
     <% if @pagination_info[:total_courses] > 0 %>
       <div class="mt-2 text-muted small">
         Showing <strong><%= @pagination_info[:start_number] %>–<%= @pagination_info[:end_number] %></strong> of
@@ -227,6 +219,18 @@
       <% end %>
     </div>
   </div>
+  <div class="mt-2 mb-3">
+    <h5 class="text-dark mb-0">
+      <% if params[:query].present? %>
+        Showing matches for "<span class="text-primary fw-bold"><%= params[:query] %></span>":<br>
+      <% end %>
+      <div class="mt-1">
+        <span class="fw-normal">Courses (<span class="text-primary fw-bold"><%= course_count %></span>) available in (<span class="text-primary fw-bold"><%= @university_count %></span>) Institutes</span>
+      </div>
+    </h5>
+  </div>
+  <div style="height: 40rem;
+    overflow-y: auto;">
   <% if @courses_by_university.any? %>
     <% @courses_by_university.each do |grouped_university| %>
       <% if grouped_university[:university].present? %>
@@ -355,6 +359,7 @@
       <% end %>
     <% end %>
   <% end %>
+  </div>
   <% @courses_by_university.each do |grouped_university| %>
     <% grouped_university[:courses].each do |course| %>
       <% if course.university.blank? %>

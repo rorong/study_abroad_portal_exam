@@ -21,21 +21,20 @@
           
           <!-- All filter fields moved to sidebar -->
           <% if false %>
-          <div class="col-12">
-            <%= f.label :department_id, "Department", class: "form-label" %>
-            <%= f.select :department_id, 
-              options_from_collection_for_select(
-                @available_departments,
-                :id,
-                ->(d) { "#{d.name} (#{@available_departments_counts[d.id] || 0})" },
-                params[:department_id]
-              ),
-              { include_blank: "Department" }, 
-              class: "form-select", 
-              data: { action: "change->search#search" }
-            %>
-
-          </div>
+            <div class="col-12">
+              <%= f.label :department_id, "Department", class: "form-label" %>
+              <%= f.select :department_id, 
+                options_from_collection_for_select(
+                  @available_departments,
+                  :id,
+                  ->(d) { "#{d.name} (#{@available_departments_counts[d.id] || 0})" },
+                  params[:department_id]
+                ),
+                { include_blank: "Department" }, 
+                class: "form-select", 
+                data: { action: "change->search#search" }
+              %>
+            </div>
           <% end %>
           <div class="col-12">
             <%= f.label :university_id, "University", class: "form-label" %>
@@ -216,54 +215,54 @@
 
           </div>
           <div class="col-12">
-          <%= f.label :min_tuition_fee, "Tuition Fee", class: "form-label" %>
-          <div class="d-flex align-items-center">
-            <% [:min_tuition_fee, :max_tuition_fee].each_with_index do |field, index| %>
-              <div class="input-group input-group-sm <%= 'me-2' if index == 0 %>">
-                <span class="input-group-text"><%= currency_symbol %></span>
-                <%= f.number_field field,
-                      value: params[field],
+            <%= f.label :min_tuition_fee, "Tuition Fee", class: "form-label" %>
+            <div class="d-flex align-items-center">
+              <% [:min_tuition_fee, :max_tuition_fee].each_with_index do |field, index| %>
+                <div class="input-group input-group-sm <%= 'me-2' if index == 0 %>">
+                  <span class="input-group-text"><%= currency_symbol %></span>
+                  <%= f.number_field field,
+                      value: convert_currency(index.zero? ? @min_tution_fee : @max_tution_fee, 'USD', session[:currency]),
                       placeholder: index.zero? ? "Min" : "Max",
-                      class: "form-control",
-                      data: {
-                        search_target: "#{field.to_s.camelize(:lower)}",
-                        action: "change->search#search"
-                      } %>
-              </div>
-              <%== '<span class="mx-2">-</span>' if index.zero? %>
-            <% end %>
+                        class: "form-control",
+                        data: {
+                          search_target: "#{field.to_s.camelize(:lower)}",
+                          action: "change->search#search"
+                        }, disabled: true %>
+                </div>
+                <%== '<span class="mx-2">-</span>' if index.zero? %>
+              <% end %>
+            </div>
+            <div class="mt-2">
+              <input type="range" 
+                class="form-range"
+                min="0" 
+                max="<%= convert_currency(100_000, 'USD', session[:currency]) %>"
+                step="<%= convert_currency(1_000, 'USD', session[:currency]) %>"
+                data-search-target="tuitionFeeSlider"
+                data-action="change->search#updateTuitionFeeInputs"
+                value="<%= params[:max_tuition_fee] || convert_currency(100_000, 'USD', session[:currency]) %>">
+            </div>
           </div>
-          <div class="mt-2">
-            <input type="range" 
-              class="form-range"
-              min="0" 
-              max="<%= convert_currency(100_000, 'USD', session[:currency]) %>"
-              step="<%= convert_currency(1_000, 'USD', session[:currency]) %>"
-              data-search-target="tuitionFeeSlider"
-              data-action="change->search#updateTuitionFeeInputs"
-              value="<%= params[:max_tuition_fee] || convert_currency(100_000, 'USD', session[:currency]) %>">
-          </div>
-        </div>
           <div class="col-12">
             <%= f.label :internship_period, "Internship Period", class: "form-label" %>
             <div class="d-flex align-items-center">
               <%= f.number_field :min_internship, 
-                value: params[:min_internship],
+                value: @min_internship,
                 placeholder: "Min",
                 class: "form-control form-control-sm me-2", 
                 data: { 
                   search_target: "minInternship",
                   action: "change->search#search"
-                } %>
+                },disabled: true  %>
               <span class="mx-2">-</span>
               <%= f.number_field :max_internship, 
-                value: params[:max_internship],
+                value: @max_internship,
                 placeholder: "Max",
                 class: "form-control form-control-sm", 
                 data: { 
                   search_target: "maxInternship",
                   action: "change->search#search"
-                } %>
+                },disabled: true  %>
             </div>
             <div class="mt-2">
               <input type="range" 
@@ -276,26 +275,26 @@
                 value="<%= params[:max_internship] || 24 %>">
             </div>
           </div>
-          <div class="col-12">
+        <div class="col-12">
           <%= f.label :min_world_ranking, "World Ranking", class: "form-label" %>
           <div class="d-flex align-items-center">
             <%= f.number_field :min_world_ranking, 
-              value: params[:min_world_ranking],
+              value: @min_world_ranking,
               placeholder: "Min",
               class: "form-control form-control-sm me-2", 
               data: { 
                 search_target: "minWorldRanking",
                 action: "change->search#search"
-              } %>
+              } ,disabled: true  %>
             <span class="mx-2">-</span>
             <%= f.number_field :max_world_ranking, 
-              value: params[:max_world_ranking],
+              value: @max_world_ranking,
               placeholder: "Max",
               class: "form-control form-control-sm", 
               data: { 
                 search_target: "maxWorldRanking",
                 action: "change->search#search"
-              } %>
+              } ,disabled: true %>
           </div>
           <div class="mt-2">
             <input type="range" 
@@ -312,22 +311,22 @@
           <%= f.label :min_qs_ranking, "QS Ranking", class: "form-label" %>
           <div class="d-flex align-items-center">
             <%= f.number_field :min_qs_ranking, 
-              value: params[:min_qs_ranking],
+              value: @min_qs_ranking,
               placeholder: "Min",
               class: "form-control form-control-sm me-2", 
               data: { 
                 search_target: "minQsRanking",
                 action: "change->search#search"
-              } %>
+              },disabled: true  %>
             <span class="mx-2">-</span>
             <%= f.number_field :max_qs_ranking, 
-              value: params[:max_qs_ranking],
+              value: @max_qs_ranking,
               placeholder: "Max",
               class: "form-control form-control-sm", 
               data: { 
                 search_target: "maxQsRanking",
                 action: "change->search#search"
-              } %>
+              } ,disabled: true %>
           </div>
           <div class="mt-2">
             <input type="range" 
@@ -344,22 +343,22 @@
           <%= f.label :min_national_ranking, "National Ranking", class: "form-label" %>
           <div class="d-flex align-items-center">
             <%= f.number_field :min_national_ranking, 
-              value: params[:min_national_ranking],
+              value: @min_national_ranking,
               placeholder: "Min",
               class: "form-control form-control-sm me-2", 
               data: { 
                 search_target: "minNationalRanking",
                 action: "change->search#search"
-              } %>
+              },disabled: true  %>
             <span class="mx-2">-</span>
             <%= f.number_field :max_national_ranking, 
-              value: params[:max_national_ranking],
+              value: @max_national_ranking,
               placeholder: "Max",
               class: "form-control form-control-sm", 
               data: { 
                 search_target: "maxNationalRanking",
                 action: "change->search#search"
-              } %>
+              },disabled: true  %>
           </div>
           <div class="mt-2">
             <input type="range" 
@@ -376,22 +375,22 @@
           <%= f.label :course_duration, "Duration", class: "form-label" %>
           <div class="d-flex align-items-center">
             <%= f.number_field :min_duration, 
-              value: params[:min_duration],
+              value: @min_duration,
               placeholder: "Min",
               class: "form-control form-control-sm me-2", 
               data: { 
                 search_target: "minDuration",
                 action: "change->search#search"
-              } %>
+              },disabled: true %>
             <span class="mx-2">-</span>
             <%= f.number_field :max_duration, 
-              value: params[:max_duration],
+              value: @max_duration,
               placeholder: "Max",
               class: "form-control form-control-sm", 
               data: { 
                 search_target: "maxDuration",
                 action: "change->search#search"
-              } %>
+              },disabled: true  %>
           </div>
           <div class="mt-2">
             <input type="range" 
@@ -403,36 +402,44 @@
               data-action="change->search#updateDurationInputs"
               value="<%= params[:max_duration] || 48 %>">
           </div>
+          <!--<span class="me-2">
+            Min: <span data-search-target="minDurationDisplay"><%= @min_duration %></span> months
+          </span>
+          <span class="ms-2">
+            Max: <span data-search-target="maxDurationDisplay"><%= @max_duration %></span> months
+          </span>-->
         </div>
         <div class="col-12">
-        <%= f.label :application_fee, "Application Fee", class: "form-label" %>
-        <div class="d-flex align-items-center">
-          <% [:min_application_fee, :max_application_fee].each_with_index do |field, index| %>
-            <div class="input-group input-group-sm <%= 'me-2' if index == 0 %>">
-              <span class="input-group-text"><%= currency_symbol %></span>
-              <%= f.number_field field,
-                    value: params[field],
+          <%= f.label :application_fee, "Application Fee", class: "form-label" %>
+          <div class="d-flex align-items-center">
+            <% [:min_application_fee, :max_application_fee].each_with_index do |field, index| %>
+              <div class="input-group input-group-sm <%= 'me-2' if index == 0 %>">
+                <span class="input-group-text"><%= currency_symbol %></span>
+                <%= f.number_field field,
+                    value: convert_currency(index.zero? ? @min_application_fee : @max_application_fee, 'USD', session[:currency]).to_f,
                     placeholder: index.zero? ? "Min" : "Max",
                     class: "form-control",
                     data: {
                       search_target: "#{field.to_s.camelize(:lower)}",
                       action: "change->search#search"
-                    } %>
-            </div>
-            <%== '<span class="mx-2">-</span>' if index.zero? %>
-          <% end %>
+                    }, disabled: true %>
+              </div>
+              <% if index.zero? %>
+                <span class="mx-2">-</span>
+              <% end %>
+            <% end %>
+          </div>
+          <div class="mt-2">
+            <input type="range" 
+              class="form-range"
+              min="<%= convert_currency(@min_application_fee || 0, 'USD', session[:currency]).to_f %>"
+              max="<%= convert_currency(@max_application_fee || 500, 'USD', session[:currency]).to_f %>"
+              step="<%= convert_currency(10, 'USD', session[:currency]).to_f %>"
+              data-search-target="applicationFeeSlider"
+              data-action="change->search#updateApplicationFeeInputs"
+              value="<%= convert_currency((params[:max_application_fee] || @max_application_fee || 500), 'USD', session[:currency]).to_f %>">
+          </div>
         </div>
-        <div class="mt-2">
-          <input type="range" 
-            class="form-range"
-            min="0"
-            max="<%= convert_currency(500, 'USD', session[:currency]) %>"
-            step="<%= convert_currency(10, 'USD', session[:currency]) %>"
-            data-search-target="applicationFeeSlider"
-            data-action="change->search#updateApplicationFeeInputs"
-            value="<%= params[:max_application_fee] || convert_currency(500, 'USD', session[:currency]) %>">
-        </div>
-      </div>
         </div>
       <% end %>
   </div>

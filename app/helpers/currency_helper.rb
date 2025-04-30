@@ -1,25 +1,27 @@
 module CurrencyHelper
-    def convert_currency(amount, from_currency = 'USD', to_currency = nil)
+      def convert_currency(amount, from_currency = 'USD', to_currency = nil)
         return amount if amount.nil?
         to_currency ||= session[:currency] || 'USD'
         return amount if from_currency == to_currency
-        # Try to get exchange rates from cache or API
+
         exchange_rates = fetch_exchange_rates
-        
-        # Check if exchange rates are valid
-        if exchange_rates[from_currency].nil? || exchange_rates[to_currency].nil?
-          Rails.logger.warn("Missing exchange rate for #{from_currency} or #{to_currency}")
-          return amount # Return original amount if exchange rates are missing
+
+        from_rate = exchange_rates[from_currency]
+        to_rate = exchange_rates[to_currency]
+
+        # Defensive: Convert both rates to Float safely
+        from_rate = from_rate.to_s.gsub(/[^\d\.]/, '').to_f
+        to_rate = to_rate.to_s.gsub(/[^\d\.]/, '').to_f
+
+        if from_rate.zero? || to_rate.zero?
+          Rails.logger.warn("Invalid exchange rate: #{from_currency}=#{from_rate}, #{to_currency}=#{to_rate}")
+          return amount
         end
-        
-        # Convert to USD first if not already in USD
-        usd_amount = from_currency == 'USD' ? amount : amount / exchange_rates[from_currency]
-        # Then convert to target currency
-        converted_amount = usd_amount * exchange_rates[to_currency]
-        # Round to 2 decimal places
+
+        usd_amount = from_currency == 'USD' ? amount.to_f : amount.to_f / from_rate
+        converted_amount = usd_amount * to_rate
         converted_amount.round(2)
-      end
-      
+      end   
       def fetch_exchange_rates
         # Try to get rates from cache first
         cached_rates = Rails.cache.read('exchange_rates')

@@ -55,6 +55,7 @@ export default class SearchController extends Controller {
     }
     
     // Listen for currency changes
+      // #REmove and test
     document.addEventListener('currency:updated', (event) => {
       if (event.detail && event.detail.currency) {
         this.currency = event.detail.currency;
@@ -348,27 +349,62 @@ export default class SearchController extends Controller {
     }
   }
 
+  // updateDurationInputs(event) {
+  //   const slider = event.target;
+  //   const maxInput = this.maxDurationTarget;
+  //   const minInput = this.minDurationTarget;
+
+  //   // Update max duration input with slider value
+  //   maxInput.value = slider.value;
+    
+  //   // If min duration is greater than max, update min to match max
+  //   if (parseInt(minInput.value) > parseInt(maxInput.value)) {
+  //     minInput.value = maxInput.value;
+  //   }
+
+  //   // Trigger search
+  //   this.search(event);
+  // }
   updateDurationInputs(event) {
     const slider = event.target;
     const maxInput = this.maxDurationTarget;
     const minInput = this.minDurationTarget;
 
+    // Enable both inputs
+    maxInput.disabled = false;
+    minInput.disabled = false;
+
     // Update max duration input with slider value
     maxInput.value = slider.value;
-    
+
     // If min duration is greater than max, update min to match max
     if (parseInt(minInput.value) > parseInt(maxInput.value)) {
       minInput.value = maxInput.value;
+    }
+
+    // Update visible display spans (if they exist)
+    if (this.hasMaxDurationDisplayTarget) {
+      this.maxDurationDisplayTarget.textContent = maxInput.value;
+    }
+
+    if (this.hasMinDurationDisplayTarget) {
+      this.minDurationDisplayTarget.textContent = minInput.value;
     }
 
     // Trigger search
     this.search(event);
   }
 
+
+
   updateApplicationFeeInputs(event) {
     const slider = event.target;
     const maxInput = this.maxApplicationFeeTarget;
     const minInput = this.minApplicationFeeTarget;
+
+    // Enable both inputs
+    maxInput.disabled = false;
+    minInput.disabled = false;
 
     // Update max application fee input with slider value
     maxInput.value = slider.value;
@@ -378,14 +414,18 @@ export default class SearchController extends Controller {
       minInput.value = maxInput.value;
     }
 
-    // Trigger search with explicit flag
+    // Trigger search with updated values
     this.search(event);
   }
+
 
   updateInternshipInputs(event) {
     const slider = event.target;
     const maxInput = this.maxInternshipTarget;
     const minInput = this.minInternshipTarget;
+
+    maxInput.disabled = false;
+    minInput.disabled = false;
 
     // Update max internship input with slider value
     maxInput.value = slider.value;
@@ -404,6 +444,9 @@ export default class SearchController extends Controller {
     const maxInput = this.maxWorldRankingTarget;
     const minInput = this.minWorldRankingTarget;
 
+    maxInput.disabled = false;
+    minInput.disabled = false;
+
     // Update max world ranking input with slider value
     maxInput.value = slider.value;
     
@@ -421,6 +464,8 @@ export default class SearchController extends Controller {
     const maxInput = this.maxQsRankingTarget;
     const minInput = this.minQsRankingTarget;
 
+    maxInput.disabled = false;
+    minInput.disabled = false;
     // Update max QS ranking input with slider value
     maxInput.value = slider.value;
     
@@ -438,6 +483,8 @@ export default class SearchController extends Controller {
     const maxInput = this.maxNationalRankingTarget;
     const minInput = this.minNationalRankingTarget;
 
+    maxInput.disabled = false;
+    minInput.disabled = false;
     // Update max national ranking input with slider value
     maxInput.value = slider.value;
     
@@ -455,17 +502,22 @@ export default class SearchController extends Controller {
     const maxInput = this.maxTuitionFeeTarget;
     const minInput = this.minTuitionFeeTarget;
 
+    // Enable both inputs
+    maxInput.disabled = false;
+    minInput.disabled = false;
+
     // Update max tuition fee input with slider value
     maxInput.value = slider.value;
-    
-    // If min tuition fee is greater than max, update min to match max
+
+    // If min tuition fee is greater than max, adjust min to match max
     if (parseInt(minInput.value) > parseInt(maxInput.value)) {
       minInput.value = maxInput.value;
     }
 
-    // Trigger search with explicit flag
+    // Trigger search with the new values
     this.search(event);
   }
+
 
   updateDistanceInputs(event) {
     const slider = event.target;
@@ -478,6 +530,7 @@ export default class SearchController extends Controller {
     this.search(event);
   }
 
+  // #REmove and test
   handleFilterChange(event) {
     console.log("Filter changed:", event.target.name, event.target.value);
     
@@ -525,6 +578,18 @@ export default class SearchController extends Controller {
     // Find the closest form element
     const form = event.target.closest('form');
     
+    console.log("event.target----", event.target)
+    if (event.target.id === 'tuitionFeeSlider') {
+      console.log("tuitionFeeSlider");
+      event.target.disabled = false;
+    }
+
+    // // else if even.target=== {
+
+    // // }
+    // // else{
+
+    // }
     // Always update query results for search input if target exists
     if (event.target.matches('[data-search-target="input"]') && this.hasQueryResultsTarget) {
       this.updateQueryResults(event);
@@ -694,21 +759,21 @@ export default class SearchController extends Controller {
     }
   }
 
-  // clear(event) {
-  //   event.preventDefault();
-  //   // Clear the search input if it exists
-  //   if (this.hasInputTarget) {
-  //     this.inputTarget.value = '';
-  //   }
-  //   // Hide the results container
-  //   if (this.hasQueryResultsTarget) {
-  //     this.queryResultsTarget.classList.add('d-none');
-  //   }
-  //   // Clear the results container
-  //   if (this.hasResultsContainerTarget) {
-  //     this.resultsContainerTarget.innerHTML = '';
-  //   }
-  // }
+  clear(event) {
+    event.preventDefault();
+    // Clear the search input if it exists
+    if (this.hasInputTarget) {
+      this.inputTarget.value = '';
+    }
+    // Hide the results container
+    if (this.hasQueryResultsTarget) {
+      this.queryResultsTarget.classList.add('d-none');
+    }
+    // Clear the results container
+    if (this.hasResultsContainerTarget) {
+      this.resultsContainerTarget.innerHTML = '';
+    }
+  }
 
   handleAddressKeydown(event) {
     if (event.key === 'Enter') {

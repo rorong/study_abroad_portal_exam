@@ -73,73 +73,74 @@ class Course < ApplicationRecord
           synonyms: [
             # 🎓 Business & MBA
             "mba => business, business management, business/management, business analytics, marketing, accounting, finance, human resources, master of business administration",
-            "business => mba, business management, business/management, business analytics, marketing, accounting, finance, human resources, master of business administration, entrepreneurship",
-            "management => mba, business management, human resources, business/management",
-            "business/management => mba, management, business, business analytics, marketing, accounting, finance, hr, human resources",
-            "business management => business, business/management, mba, entrepreneurship, marketing, hr",
-            "business analytics => business, mba, analytics, data analytics, data science",
-            "finance => accounting, business, business management, economics, mba, financial studies",
+            "business => mba, business management, business/management, business analytics, marketing, accounting, finance, human resources, entrepreneurship",
+            "management => mba, business management, business/management, human resources",
+            "business/management => mba, management, business, business analytics, marketing, accounting, finance, hr",
+            "business management => business, mba, entrepreneurship, marketing, hr",
+            "business analytics => mba, analytics, data analytics, data science",
+            "finance => accounting, business, business management, economics, mba",
             "accounting => finance, business, mba",
-            "human resources => hr, mba, business management, business/management",
-            "marketing => business, mba, digital marketing, business analytics, business/management",
+            "human resources => hr, mba, business management",
+            "marketing => business, mba, digital marketing, business analytics",
+            "bba => BBA, Bachelor of Business Administration, BBA Specialization in Accounting, BBA Specialization in Energy Management, BBA Specialization in Project Management, Business Management, Business Analytics, Marketing, Accounting, Finance, HR, Human Resources",
 
             # 🛠️ Engineering
-            "engineering => chemical engineering, civil engineering, mechanical engineering, electrical and electronics engineering, aerospace engineering, computer science, software engineering, information technology, material sciences, metallurgy, robotics, mechatronics, environmental engineering",
-            "mechanical engineering => mechatronics, robotics, mechanical and mechatronics engineering",
-            "electrical and electronics engineering => eee, electronics, electrical engineering",
+            "engineering => chemical engineering, civil engineering, mechanical engineering, electrical engineering, aerospace engineering, computer science, software engineering, information technology, material science, robotics, mechatronics, environmental engineering",
+            "mechanical engineering => robotics, mechatronics",
+            "electrical engineering => electronics, electrical engineering",
             "computer science => software engineering, cs, it, information technology, programming, ai, artificial intelligence",
-            "information technology => computer science, it, software engineering, cs, cloud computing",
-            "aerospace engineering => aviation, mechanical engineering, space science, engineering",
-            "civil engineering => architecture, construction, urban planning, architect",
-            "architecture => civil engineering, architect, built environment",
-            "chemical engineering => chemistry, process engineering, industrial chemistry",
-            "material sciences => metallurgy, physics, nanotech, chemistry",
-            "mechatronics => mechanical engineering, robotics, automation, engineering",
-            "software engineering => computer science, programming, it",
+            "information technology => computer science, software engineering, it, cloud computing",
+            "aerospace engineering => aviation, space science",
+            "civil engineering => architecture, construction",
+            "architecture => civil engineering, built environment",
+            "chemical engineering => chemistry, industrial chemistry",
+            "material science => metallurgy, physics, nanotechnology",
+            "mechatronics => robotics, automation",
+            "software engineering => computer science, programming",
 
             # 🔬 Science
-            "science => biology, chemistry, physics, mathematics, statistics, environmental science, health sciences, life sciences, medicine, pharmacy, science and technology",
-            "life sciences => biology, health sciences, medicine and veterinary sciences",
-            "health sciences => nursing, physiotherapy, life sciences, medicine, pharmacy, healthcare",
-            "medicine => health sciences, medicine and veterinary sciences, pharmacy",
-            "pharmacy => medicine, chemistry, biology, health sciences",
-            "physics => physics and astronomical sciences, astronomy, astrophysics",
-            "mathematics => mathematics and statistics, stats, data science, analytics",
-            "statistics => mathematics, data science, analytics",
-            "biology => biological sciences, life sciences, health sciences, biochemistry, medicine",
-            "environment and sustainability => environmental science, ecology, sustainability studies",
-            "chemistry => chemical sciences, medicine and veterinary sciences, biology",
+            "science => biology, chemistry, physics, mathematics, environmental science, health sciences, life sciences, medicine, pharmacy",
+            "life sciences => biology, health sciences, medicine",
+            "health sciences => nursing, physiotherapy, pharmacy",
+            "medicine => health sciences, pharmacy",
+            "pharmacy => medicine, chemistry, biology",
+            "physics => astronomy, astrophysics",
+            "mathematics => statistics, data science, analytics",
+            "statistics => mathematics, data science",
+            "biology => biological sciences, medicine",
+            "environment and sustainability => environmental science, ecology",
+            "chemistry => chemical sciences, biology",
 
             # 👨‍🎓 Humanities & Social Sciences
-            "humanities => humanities and social sciences, social sciences, literature, language, history, archeology, culture",
-            "social sciences => sociology, political science, psychology, criminology, humanities, economics",
-            "psychology => behavioral sciences, mental health, neuroscience, social sciences",
-            "law => legal studies, business law, corporate law, international law",
-            "education => teaching, pedagogy, learning sciences",
-            "economics => finance, business, accounting, econometrics",
-            "history => culture, humanities, literature, language",
-            "language => literature, linguistics, translation, philology",
-            "literature language and culture => language, literature, culture, humanities",
+            "humanities => social sciences, literature, history, culture",
+            "social sciences => sociology, psychology, criminology, economics",
+            "psychology => behavioral sciences, mental health, neuroscience",
+            "law => legal studies, business law, corporate law",
+            "education => teaching, pedagogy",
+            "economics => finance, business, econometrics",
+            "history => culture, literature",
+            "language => literature, linguistics",
+            "literature language and culture => language, literature, humanities",
 
             # 🎨 Creative Arts & Media
-            "art and design => fine arts, design, creative arts, graphic design, visual arts, fashion, textiles",
-            "music => performance arts, performing arts, audio production",
-            "dance => performance arts, performing arts, choreography",
-            "film making => journalism and media studies, performance arts, visual media, film making and photography, media studies",
-            "journalism and media studies => film making, media, communication",
-            "performance arts => film making, music, dance, theatre",
-            "journalism and media studies => media, journalism, film making, communication, mass media",
-            "photography => film making and photography, visual media",
+            "art and design => fine arts, graphic design, visual arts, fashion",
+            "music => performing arts, audio production",
+            "dance => performing arts, choreography",
+            "film making => media studies, film production, photography",
+            "journalism and media studies => film making, communication",
+            "performance arts => music, dance, theatre",
+            "photography => film making, visual media",
 
             # 🧑‍🍳 Other Specialized
-            "culinary => food sciences, hospitality and tourism, cooking, gastronomy",
-            "hospitality and tourism => tourism, hotel management, event management, culinary",
-            "sports sciences => physiotherapy, sports, health sciences, fitness",
-            "physiotherapy => health sciences, rehabilitation, sports sciences",
-            "zoology => biology, life sciences, environmental science",
-            "agriculture => food sciences, environmental science, botany",
-            "archeology => history, humanities, culture",
-            "textiles => fashion, art and design, fabric design"
+            "culinary => food sciences, hospitality, cooking, gastronomy",
+            "hospitality => tourism, hotel management, event management",
+            "sports sciences => physiotherapy, fitness, health sciences",
+            "physiotherapy => health sciences, rehabilitation",
+            "zoology => biology, life sciences",
+            "agriculture => food sciences, environmental science",
+            "archeology => history, culture",
+            "textiles => fashion, fabric design"
+
           ]
         }
       },
@@ -175,8 +176,8 @@ class Course < ApplicationRecord
       indexes :current_status, type: 'keyword'
       indexes :department_id, type: 'keyword'
       indexes :intake, type: 'keyword'
-      indexes :course_duration, type: 'keyword'
-      indexes :internship_period, type: 'keyword'
+      indexes :course_duration, type: 'float'
+      indexes :internship_period, type: 'float'
 
       # Text fields for full-text search (without autocomplete)
       indexes :module_subjects, type: 'text'
@@ -400,6 +401,36 @@ class Course < ApplicationRecord
                 size: 10000,
                 shard_size: 50000  # a bit higher than size, to be safe
               }
+            },
+            min_world_ranking: {
+              min: {
+                field: "universities.world_ranking"
+              }
+            },
+            max_world_ranking: {
+              max: {
+                field: "universities.world_ranking"
+              }
+            },
+            min_national_ranking: {
+              min: {
+                field: "universities.national_ranking"
+              }
+            },
+            max_national_ranking: {
+              max: {
+                field: "universities.national_ranking"
+              }
+            },
+            min_qs_ranking: {
+              min: {
+                field: "universities.national_ranking"
+              }
+            },
+            max_qs_ranking: {
+              max: {
+                field: "universities.national_ranking"
+              }
             }
           }
         },
@@ -451,6 +482,46 @@ class Course < ApplicationRecord
             size: 10000,
             shard_size: 50000  # a bit higher than size, to be safe
           }
+        },
+        min_application_fee: {
+          min: {
+            field: "application_fee"  # Adjust the field name if necessary
+          }
+        },
+        max_application_fee: {
+          max: {
+            field: "application_fee"  # Adjust the field name if necessary
+          }
+        },
+        min_tution_fee: {
+          min: {
+            field: "tuition_fee_international"  # Adjust the field name if necessary
+          }
+        },
+        max_tution_fee: {
+          max: {
+            field: "tuition_fee_international"  # Adjust the field name if necessary
+          }
+        },
+        min_duration: {
+          min: {
+           field: "course_duration"
+          }
+        },
+        max_duration: {
+          max: {
+            field: "course_duration"
+          }
+        },
+        min_internship: {
+          min: {
+           field: "internship_period"
+          }
+        },
+        max_internship: {
+          max: {
+            field: "internship_period"
+          }
         }
       }
 
@@ -467,17 +538,30 @@ class Course < ApplicationRecord
       #   }
       # }
       # fuzzy = query.length > 3 ? 'AUTO' : 0
+
+      search_definition[:query][:bool][:must] << {
+        match: {
+          name: {
+            query: query,
+            operator: "and",
+            boost: 10  # Higher boost for exact matches
+          }
+        }
+      }
+
+      # Fuzzy match for broader results
       search_definition[:query][:bool][:must] << {
         match: {
           name: {
             query: query,
             operator: "and",
             fuzziness: "AUTO",
-            boost: 3
+            boost: 1  # Lower boost for fuzzy matches
           }
         }
       }
 
+      # Full-text search in department (with fuzziness)
       search_definition[:query][:bool][:must] << {
         nested: {
           path: "department",
@@ -485,9 +569,9 @@ class Course < ApplicationRecord
             match: {
               "department.name": {
                 query: query,
-                operator: "and",
+                operator: "or",
                 fuzziness: "AUTO",
-                boost: 2
+                boost: 2  # Boost for department names
               }
             }
           }
@@ -729,8 +813,7 @@ class Course < ApplicationRecord
       when 'course_duration_desc'
         search_definition[:sort] = [{ course_duration: { order: 'desc', missing: '_last' } }]
     end
-
-      __elasticsearch__.search(search_definition.merge(explain: true))
-    end
+      __elasticsearch__.search(search_definition)
+  end
 
 end

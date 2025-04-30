@@ -1,7 +1,8 @@
 <div class="container-fluid mt-5">
   <div class="row">
     <!-- Sidebar Filters -->
-    <div class="col-md-3">
+    <div class="col-md-3", style="height: 50rem;
+    overflow-y: scroll;">
       <%= render 'sidebar_filters' %>
     </div>
     
@@ -47,13 +48,13 @@
   </script>
 <% end %>
 
-<% if @search_courses.present? %>
+<% if @similar_courses.present? %>
   <div class="mt-5 mb-45">
     <h3 class="mb-4 text-primary fw-bold border-bottom pb-2 ml-45">🎓 Similar Courses You Might Like</h3>
 
     <div id="similarCoursesCarousel" class="carousel slide mx-5 position-relative" data-bs-ride="carousel" style="margin-left: 100px; margin-right: 100px;">
       <div class="carousel-inner">
-        <% @search_courses.each_slice(4).with_index do |course_group, index| %>
+        <% @similar_courses.each_slice(4).with_index do |course_group, index| %>
           <div class="carousel-item <%= 'active' if index == 0 %>">
             <div class="row g-3">
               <% course_group.each do |course| %>
