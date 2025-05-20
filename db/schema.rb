@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_04_15_100313) do
+ActiveRecord::Schema[7.1].define(version: 2025_05_16_064830) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -226,6 +226,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_15_100313) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "agency_id"
+    t.text "course_module"
     t.index ["agency_id"], name: "index_courses_on_agency_id"
     t.index ["course_code"], name: "index_courses_on_course_code"
     t.index ["creator_id"], name: "index_courses_on_creator_id"
@@ -420,9 +421,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_15_100313) do
 
   create_table "users", force: :cascade do |t|
     t.string "record_id"
-    t.string "email_address"
-    t.string "secondary_email"
-    t.string "password_digest"
     t.boolean "email_opt_out", default: false
     t.string "role"
     t.string "provider"
@@ -437,7 +435,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_15_100313) do
     t.bigint "agency_id"
     t.index ["agency_id"], name: "index_users_on_agency_id"
     t.index ["email"], name: "index_users_on_email"
-    t.index ["email_address"], name: "index_users_on_email_address"
     t.index ["record_id"], name: "index_users_on_record_id"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end

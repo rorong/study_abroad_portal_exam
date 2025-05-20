@@ -45,7 +45,7 @@ class Course < ApplicationRecord
             :course_code, :course_duration, :title, :application_fee,
             :tuition_fee_international, :tuition_fee_local, :intake,
             :delivery_method, :internship_period, :duration_months,
-            :international_students_eligible, :module_subjects, :allow_backlogs, :department_id, :current_status],
+            :international_students_eligible, :module_subjects, :allow_backlogs, :department_id, :current_status, :course_module],
       include: {
         universities: { only: [:id, :record_id, :name, :code, :category, :city, :address,
          :country, :state, :post_code, :world_ranking, :qs_ranking, :national_ranking,
@@ -182,6 +182,11 @@ class Course < ApplicationRecord
       # Text fields for full-text search (without autocomplete)
       indexes :module_subjects, type: 'text'
 
+      indexes :course_module, type: 'text'
+      indexes :ml, type: 'object' do
+        indexes :tokens, type: 'rank_features'
+      end
+
       # float 
       indexes :tuition_fee_international, type: 'float'
       indexes :application_fee, type: 'float'
@@ -228,107 +233,6 @@ class Course < ApplicationRecord
 
     end
   end
-
-  def self.prefix_search(query, size: 10)
-    return [] if query.blank?
-
-    results = __elasticsearch__.search(
-      {
-        size: size,
-        query: {
-          bool: {
-            should: [
-              # Exact match on name
-              {
-                match: {
-                  name: {
-                    query: query,
-                    boost: 2
-                  }
-                }
-              },
-
-              # Fuzzy match to tolerate typos
-              {
-                match: {
-                  name: {
-                    query: query,
-                    fuzziness: "AUTO",
-                    prefix_length: 2,
-                    boost: 1.5
-                  }
-                }
-              },
-
-              # Fuzzy synonym match
-              {
-                match: {
-                  "name.synonym": {
-                    query: query,
-                    fuzziness: "AUTO",
-                    prefix_length: 2,
-                    boost: 1.3
-                  }
-                }
-              },
-
-              # Autocomplete typing
-              {
-                match_phrase_prefix: {
-                  name: {
-                    query: query,
-                    max_expansions: 10,
-                    slop: 1
-                  }
-                }
-              },
-
-              # Nested fuzzy match for department synonyms
-              {
-                nested: {
-                  path: "department",
-                  query: {
-                    match: {
-                      "department.name.synonym": {
-                        query: query,
-                        fuzziness: "AUTO",
-                        prefix_length: 2,
-                        boost: 1.2
-                      }
-                    }
-                  }
-                }
-              },
-
-              # Autocomplete on department names
-              {
-                nested: {
-                  path: "department",
-                  query: {
-                    match_phrase_prefix: {
-                      "department.name.autocomplete": {
-                        query: query,
-                        max_expansions: 10,
-                        slop: 1
-                      }
-                    }
-                  }
-                }
-              }
-            ],
-            minimum_should_match: 1
-          }
-        },
-        _source: ['id', 'name', 'universities.name']
-      }
-    )
-
-    results.map do |result|
-      university_name = result._source['universities']&.first&.dig('name') rescue nil
-      [result._source['id'], result._source['name'], university_name]
-    end
-  end
-
   
   def self.advanced_search(query, filters = {}, sort=nil, page=1, per_page=15)
     from = (page - 1) * per_page
@@ -336,6 +240,7 @@ class Course < ApplicationRecord
     search_definition = {
       from: from,
       size: per_page,
+      min_score: 1.2,
       track_total_hits: true,  # 👈 This ensures it calculates the full total
       query: {
         bool: {
@@ -527,59 +432,23 @@ class Course < ApplicationRecord
 
     }
 
-    # Full-text search
+    # Full-text semantic search using ELSER
+
     if query.present?
-      # search_definition[:query][:bool][:must] << {
-      #   multi_match: {
-      #     query: query,
-      #     # fields: ['name^5', 'title^4', 'module_subjects^2', 'universities.name'],
-      #     fields: ['name^3', 'department.name^2'],
-      #     fuzziness: 'AUTO'
-      #   }
-      # }
-      # fuzzy = query.length > 3 ? 'AUTO' : 0
-
       search_definition[:query][:bool][:must] << {
-        match: {
-          name: {
-            query: query,
-            operator: "and",
-            boost: 10  # Higher boost for exact matches
+        text_expansion: {
+          "ml.tokens": {
+            model_id: ".elser_model_2_linux-x86_64",
+            model_text: query
           }
         }
       }
-
-      # Fuzzy match for broader results
-      search_definition[:query][:bool][:must] << {
-        match: {
-          name: {
-            query: query,
-            operator: "and",
-            fuzziness: "AUTO",
-            boost: 1  # Lower boost for fuzzy matches
-          }
-        }
-      }
-
-      # Full-text search in department (with fuzziness)
-      search_definition[:query][:bool][:must] << {
-        nested: {
-          path: "department",
-          query: {
-            match: {
-              "department.name": {
-                query: query,
-                operator: "or",
-                fuzziness: "AUTO",
-                boost: 2  # Boost for department names
-              }
-            }
-          }
-        }
-      }
+    else
+      search_definition[:query][:bool][:must] << { match_all: {} }
     end
 
-    # # Filters
+
+    # Filters
     if filters[:min_tuition_fee].present? || filters[:max_tuition_fee].present?
       filters[:min_tuition_fee] ||= 0
       filters[:max_tuition_fee] ||= Float::INFINITY

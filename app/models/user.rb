@@ -16,7 +16,7 @@ class User < ApplicationRecord
   normalizes :email, with: ->(e) { e.strip.downcase }
 
   # Role-based authentication
-  enum :role, student: "student", agency: "agency"
+  enum :role, student: "student", admin: "admin"
 
   # Set default role when a new record is initialized
   after_initialize :set_default_role, if: :new_record?

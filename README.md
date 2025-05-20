@@ -84,3 +84,67 @@ To reindex
 run common method for each after any changes
 
 Course.reindex_all
+CourseRequirement.reindex_all
+University.reindex_all
+Tag.reindex_all
+Department.reindex_all
+
+
+
+
+-----
+Elastic 
+URL:
+https://my-deployment-6ed54b.es.asia-south1.gcp.elastic-cloud.com
+
+
+password
+RWP86UZLe9UhqQigdZjUODb9
+
+
+---
+1. create new db with 1lakh records
+2. clean data to save in new column
+
+Course.find_each do |course|
+  puts "course id======= #{course.id}"
+  clean_text = course.module_subjects.to_s.gsub(/[^a-zA-Z0-9\s]/, '').squish
+  course.update_column(:course_module, clean_text)
+end
+
+3.
+DELETE EXISTING INDEXES
+
+TO DELETE:
+Course.__elasticsearch__.client.indices.delete(index: 'courses') rescue nil
+
+
+4.
+REINDEX---
+
+Create index as we deleted above:
+Course.__elasticsearch__.create_index!(index: 'courses', force: true)
+
+
+5. Index/Import data in batch 
+
+client = Course.__elasticsearch__.client
+
+Course.find_in_batches(batch_size: 1000) do |batch|
+  body = batch.flat_map do |course|
+    [
+      { index: { _index: 'courses', pipeline: 'elser-ingest-pipeline', _id: course.id } },
+      course.as_indexed_json
+    ]
+  end
+
+  client.bulk(body: body)
+end
+
+
+
+
+
+TO CHECK INDEX/IMPORT DATA
+curl -u "elastic:RWP86UZLe9UhqQigdZjUODb9" \
+  https://my-deployment-6ed54b.es.asia-south1.gcp.elastic-cloud.com/_cat/indices?v

@@ -1,4 +1,5 @@
 class CoursesController < ApplicationController
+  skip_before_action :authenticate_user!, only: [:search_page] 
   def search_page
     # This is the new landing page with just the search bar
   end
@@ -54,7 +55,7 @@ class CoursesController < ApplicationController
     
     # Convert Elasticsearch hits to ActiveRecord models
     @search_courses = search_result.records
-    @similar_courses = Course.advanced_search(query, filter, sort, page, 200).records.order("RANDOM()")
+    # @similar_courses = Course.advanced_search(query, filter, sort, page, 200).records.order("RANDOM()")
     # # Paginate manually since we're using array-like records from ES
     # @courses = Kaminari.paginate_array(search_result.records.to_a, total_count: total_count)
     #                .page(page).per(per_page)

@@ -1,0 +1,59 @@
+1. CREATE INGEST
+PUT _ingest/pipeline/elser-pipeline
+{
+  "description": "ELSER v2 text expansion pipeline",
+  "processors": [
+    {
+      "inference": {
+        "model_id": ".elser_model_2_linux-x86_64",
+        "input_output": {
+          "input_field": "course_module",
+          "output_field": "module_subject_expanded"
+        },
+        "inference_config": {
+          "text_expansion": {}
+        }
+      }
+    }
+  ]
+}
+
+2. GET INGEST
+GET _ingest/pipeline/elser-ingest-pipeline
+
+3. CREATE INDEX QUERY
+
+POST courses_index/_doc?pipeline=elser-ingest-pipeline
+{
+  "course_module": "Disability Studies"
+}
+
+
+4. Search QUERY
+
+POST courses_index/_search
+{
+  "query": {
+    "text_expansion": {
+      "ml.tokens": {
+        "model_id": ".elser_model_2_linux-x86_64",
+        "model_text": "masters in psycho"
+      }
+    }
+  }
+}
+
+
+5. GET ALL INDEX DATA
+GET /courses_index/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+6. CHECK MAPPINGS 
+GET /courses_index
+
+7. GET COUNT OF INDEX DATA
+GET /courses_index/_count
